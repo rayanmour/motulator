@@ -22,8 +22,7 @@ References
 
 """
 # %%
-from __future__ import annotations
-from collections.abc import Callable
+from typing import Callable
 from dataclasses import dataclass, field
 import numpy as np
 
@@ -41,6 +40,7 @@ class InductionMotorVHzCtrlPars:
     w_m_ref: Callable[[float], float] = field(
         repr=False, default=lambda t: (t > .2)*(2*np.pi*50))
     T_s: float = 250e-6
+    six_step: bool = False
     psi_s_nom: float = 1.04  # 1 p.u.
     rate_limit: float = 2*np.pi*120
     # Motor parameter estimates

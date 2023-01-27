@@ -5,8 +5,7 @@ Vector control methods for induction motor drives.
 The algorithms are written based on the inverse-Γ model.
 
 """
-from __future__ import annotations
-from collections.abc import Callable
+from typing import Callable
 from dataclasses import dataclass, field
 import numpy as np
 
@@ -213,7 +212,6 @@ class CurrentRef:
             Limited torque reference.
 
         """
-
         def q_axis_current_limit(i_sd_ref, psi_R):
             # Priority given to the d component
             i_sq_max1 = np.sqrt(self.i_s_max**2 - i_sd_ref**2)
@@ -407,7 +405,7 @@ class SensorlessObserver:
         # Observer gain (17) with c = w_s**2 (without the orthogonal projection
         # which is embedded into the state update)
         b = alpha + 2*self.zeta_inf*np.abs(self.w_m)
-        g = b*(alpha + 1j*self.w_m)/(alpha**2 + self.w_m**2)
+        g = b/(alpha - 1j*self.w_m)
 
         # Induced voltage from stator quantities, cf. (7)
         e_s = u_s - self.R_s*i_s - self.L_sgm*(i_s - self.i_s_old)/self.T_s

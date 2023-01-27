@@ -19,11 +19,11 @@ sys.path.insert(0, os.path.abspath('../../motulator'))
 # -- Project information -----------------------------------------------------
 
 project = 'motulator'
-copyright = '2022, Aalto Electric Drives'
+copyright = '2023, Aalto Electric Drives'
 author = 'Aalto Electric Drives'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.0'
+release = '0.1.2'
 
 # -- General configuration ---------------------------------------------------
 
@@ -59,10 +59,18 @@ autoapi_python_class_content = 'both'
 #autoapi_python_class_content = 'class'
 # Add any paths that contain templates here, relative to this directory.
 # templates_path = ['_templates']
+from sphinx_gallery.sorting import ExplicitOrder
 sphinx_gallery_conf = {
     'examples_dirs': '../../examples',  # path to your example scripts
-    'gallery_dirs': 'auto_examples',  # path to where to save gallery generated output
+    'gallery_dirs':
+    'auto_examples',  # path to where to save gallery generated output
     'nested_sections': False,
+    'subsection_order': ExplicitOrder(['../../examples/vector',
+				       '../../examples/vhz',
+                                       '../../examples/flux_vector',
+                                       '../../examples/signal_inj',
+                                       '../../examples/flux_maps',
+                                       '../../examples/two_mass_systems']),
 }
 
 # List of patterns, relative to source directory, that match files and
