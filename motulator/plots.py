@@ -212,7 +212,6 @@ def plot_extra(sim, t_span=(1.1, 1.125), base=None):
         mdl.i_L
     except AttributeError:
         mdl.i_L = None
-
     if mdl.i_L is not None:
 
         fig2, (ax1, ax2) = plt.subplots(2, 1)
@@ -241,14 +240,187 @@ def plot_extra(sim, t_span=(1.1, 1.125), base=None):
         ax1.set_ylabel('Voltage (V)')
         ax2.set_ylabel('Current (A)')
     ax2.set_xlabel('Time (s)')
-
-    try:
-        fig2.align_ylabels()
-    except UnboundLocalError:
-        pass
+    fig2.align_ylabels()
 
     plt.tight_layout()
     plt.show()
+
+# %%
+"""
+--------------------------------------------------------------------------
+-----------------        GRID APPLICATIONS       -------------------------
+--------------------------------------------------------------------------
+"""
+
+# %%
+def plot_grid(sim):
+    
+    FS = 32 # Font size of the plots axis
+    FL = 32 # Font size of the legends only
+    LW = 5 # Line thickness in plots
+    
+    
+    mdl = sim.mdl.data      # Continuous-time data
+    ctrl = sim.ctrl.data    # Discrete-time data
+       
+    t_range = (0, mdl.t[-1])   # Time span
+    
+    N_m = len(mdl.t) # Length of the data (continuous-time)
+    N_c = len(ctrl.t) # Length of the data (discrete-time)
+    
+    # 3-phase quantities
+    i_cs = ctrl.i_c*np.exp(1j*np.asarray(ctrl.theta_pll))
+    i_c_abc = np.asarray(complex2abc(i_cs))
+    u_g_abc = np.asarray(complex2abc(mdl.u_gs))
+    
+    i_c_a = (i_c_abc[[0],:])
+    i_c_a = i_c_a.reshape((N_c,))
+    i_c_b = (i_c_abc[[1],:])
+    i_c_b = i_c_b.reshape((N_c,))
+    i_c_c = (i_c_abc[[2],:])
+    i_c_c = i_c_c.reshape((N_c,))
+    
+    u_g_a = (u_g_abc[[0],:])
+    u_g_a = u_g_a.reshape((N_m,))
+    u_g_b = (u_g_abc[[1],:])
+    u_g_b = u_g_b.reshape((N_m,))
+    u_g_c = (u_g_abc[[2],:])
+    u_g_c = u_g_c.reshape((N_m,))
+    
+    # Calculation of active and reactive powers
+    p_g = 1.5*np.asarray(np.real(ctrl.abs_u_g*np.conj(ctrl.i_c)))
+    q_g = 1.5*np.asarray(np.imag(ctrl.abs_u_g*np.conj(ctrl.i_c)))
+    p_g_ref = np.asarray(ctrl.p_g_ref)
+    q_g_ref = np.asarray(ctrl.q_g_ref)
+    
+    # %%
+    fig, (ax1, ax2,ax3) = plt.subplots(3, 1, figsize=(20, 28))
+
+    if sim.ctrl.on_v_dc==False:
+        ax1.plot(mdl.t, u_g_a, linewidth=LW)
+        ax1.plot(mdl.t, u_g_b, linewidth=LW)
+        ax1.plot(mdl.t, u_g_c, linewidth=LW)
+        ax1.legend([r'$u_g^a$',r'$u_g^b$',r'$u_g^c$'],prop={'size': FL})
+        # ax1.step(ctrl.t, ctrl.w_s, where='post')  # Stator frequency
+        ax1.set_xlim(t_range)
+        ax1.set_xticklabels([])
+        ax1.set_ylabel('Grid voltage (V)')
+    else:
+        ax1.plot(mdl.t, mdl.u_dc, linewidth=LW)
+        ax1.plot(ctrl.t, ctrl.u_dc_ref, '--', linewidth=LW)
+        ax1.legend([r'$u_{dc}$',r'$u_{dc}^*$'],prop={'size': FL})
+        # ax1.step(ctrl.t, ctrl.w_s, where='post')  # Stator frequency
+        ax1.set_xlim(t_range)
+        ax1.set_ylim([550, 700])
+        ax1.set_xticklabels([])
+        ax1.set_ylabel('DC-bus voltage (V)')
+    
+    for item in ([ax1.title, ax1.xaxis.label, ax1.yaxis.label] +
+             ax1.get_xticklabels() + ax1.get_yticklabels()):
+        item.set_fontsize(FS)
+
+    ax2.plot(ctrl.t, i_c_a, linewidth=LW)
+    ax2.plot(ctrl.t, i_c_b, linewidth=LW)
+    ax2.plot(ctrl.t, i_c_c, linewidth=LW)
+    ax2.legend([r'$i_c^a$',r'$i_c^b$',r'$i_c^c$'],prop={'size': FL})
+    # ax1.step(ctrl.t, ctrl.w_s, where='post')  # Stator frequency
+    ax2.set_xlim(t_range)
+    ax2.set_xticklabels([])
+    ax2.set_ylabel('Converter current (A)')
+
+    for item in ([ax2.title, ax2.xaxis.label, ax2.yaxis.label] +
+             ax2.get_xticklabels() + ax2.get_yticklabels()):
+        item.set_fontsize(FS)
+
+
+    ax3.plot(mdl.t, mdl.theta, linewidth=LW)
+    ax3.plot(ctrl.t, ctrl.theta_pll, '--', linewidth=LW)
+    ax3.legend([r'$\theta_{g}$',r'$\theta_{pll}$'],prop={'size': FL})
+    # ax3.step(ctrl.t, ctrl.w_s, where='post')  # Stator frequency
+    ax3.set_xlim(t_range)
+    #ax3.set_xticklabels([])
+    ax3.set_xlabel('time (s)')
+    ax3.set_ylabel('grid angle (rad)')
+    
+    for item in ([ax3.title, ax3.xaxis.label, ax3.yaxis.label] +
+             ax3.get_xticklabels() + ax3.get_yticklabels()):
+        item.set_fontsize(FS)
+
+    fig.align_ylabels()
+    plt.tight_layout()
+    plt.grid()
+    ax3.grid()
+    plt.show()    
+
+    
+    # %%
+    fig, (ax1, ax2,ax3) = plt.subplots(3, 1, figsize=(20, 28))
+
+    ax1.plot(ctrl.t, p_g/1000, linewidth=LW)
+    ax1.plot(ctrl.t, q_g/1000, linewidth=LW)
+    ax1.plot(ctrl.t, (p_g_ref/1000), '--', linewidth=LW)
+    ax1.plot(ctrl.t, (q_g_ref/1000), '--', linewidth=LW)
+    ax1.legend([r'$p_{g}$',r'$q_{g}$',r'$p_{g}^*$',r'$q_{g}^*$'],prop={'size': FL})
+    # ax1.step(ctrl.t, ctrl.w_s, where='post')  # Stator frequency
+    ax1.set_xlim(t_range)
+    ax1.set_xticklabels([])
+    ax1.set_ylabel('Power (kW)')
+
+    
+    for item in ([ax1.title, ax1.xaxis.label, ax1.yaxis.label] +
+             ax1.get_xticklabels() + ax1.get_yticklabels()):
+        item.set_fontsize(FS)
+
+    ax2.plot(ctrl.t, np.real(ctrl.i_c), linewidth=LW)
+    ax2.plot(ctrl.t, np.imag(ctrl.i_c), linewidth=LW)
+    ax2.plot(ctrl.t, np.real(ctrl.i_c_ref), '--', linewidth=LW)
+    ax2.plot(ctrl.t, np.imag(ctrl.i_c_ref), '--', linewidth=LW)
+    #ax2.plot(mdl.t, mdl.iL, linewidth=LW) converter-side dc current for debug
+    ax2.legend([r'$i_{c}^d$',r'$i_{c}^q$',r'$i_{c,ref}^d$',r'$i_{c,ref}^q$'],prop={'size': FL})
+    # ax1.step(ctrl.t, ctrl.w_s, where='post')  # Stator frequency
+    ax2.set_xlim(t_range)
+    ax2.set_xticklabels([])
+    ax2.set_ylabel('Line current (A)')
+
+    for item in ([ax2.title, ax2.xaxis.label, ax2.yaxis.label] +
+             ax2.get_xticklabels() + ax2.get_yticklabels()):
+        item.set_fontsize(FS)
+
+
+    ax3.plot(ctrl.t,np.real(ctrl.u_c_ref_lim),ctrl.t,np.imag(ctrl.u_c_ref_lim), linewidth=LW)
+    ax3.plot(mdl.t,np.real(mdl.u_gs*np.exp(-1j*mdl.theta)),'--',mdl.t,np.imag(mdl.u_gs*np.exp(-1j*mdl.theta)),'--', linewidth=LW)
+    ax3.legend([r'$Re(u_c^*)$', r'$Im(u_c^*)$',r'$Re(u_g)$', r'$Im(u_g)$',r'$u_{dc}$'], prop={'size': FS})
+    ax3.set_xlim(t_range)
+    ax3.set_ylabel('AC voltage (V)')
+    #ax3.set_xticklabels([])
+    ax3.set_xlabel('time (s)')
+
+    for item in ([ax3.title, ax3.xaxis.label, ax3.yaxis.label] +
+             ax3.get_xticklabels() + ax3.get_yticklabels()):
+        item.set_fontsize(FS)
+
+    fig.align_ylabels()
+    plt.tight_layout()
+    plt.grid()
+    ax3.grid()
+    plt.show()    
+
+"""
+    
+    ax3.plot(mdl.t, ig_a, mdl.t, ig_b, mdl.t, ig_c)
+    ax3.legend([r'$i_{g}^{a}$,',r'$i_{g}^{b}$',r'$i_{g}^{c}$'],prop={'size': FL})
+    # ax3.step(ctrl.t, ctrl.w_s, where='post')  # Stator frequency
+    ax3.set_xlim(t_range)
+    ax3.set_xticklabels([])
+    ax3.set_ylabel('Line current (A)')
+    
+    for item in ([ax3.title, ax3.xaxis.label, ax3.yaxis.label] +
+             ax3.get_xticklabels() + ax3.get_yticklabels()):
+        item.set_fontsize(32)
+    
+"""
+
+
 
 
 # %%
