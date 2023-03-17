@@ -1,3 +1,5 @@
+# pylint: disable=all
+
 # Configuration file for the Sphinx documentation builder.
 #
 # This file only contains a selection of the most common options. For a full
@@ -28,25 +30,22 @@ release = '0.1.2'
 # -- General configuration ---------------------------------------------------
 
 # This value contains a list of modules to be mocked up.
-# This is useful when some external dependencies are not met at build time and break the building process.
-# You may only specify the root package of the dependencies themselves and omit the sub-modules:
+# This is useful when some external dependencies are not met at build time and 
+# break the building process. You may only specify the root package of the 
+# dependencies themselves and omit the sub-modules:
 autodoc_mock_imports = ['numpy', 'matplotlib', 'scipy', 'cycler']
 
 # Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
+# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     'sphinx.ext.napoleon', 'sphinx.ext.viewcode', 'numpydoc',
     'sphinx_copybutton', 'sphinx.ext.mathjax', 'sphinx_gallery.gen_gallery'
 ]
-#, 'sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'nbsphinx', MyST-NB]
+
 extensions.append('autoapi.extension')
 autoapi_type = 'python'
-# autoapi_dirs = ['../..']
-# autoapi_root = '../../motulator'
 autoapi_dirs = ['../../motulator']
 autodoc_typehints = 'description'
-# autoapi_add_toctree_entry = False
 autoapi_options = [
     'members',
     'show-inheritance',
@@ -56,9 +55,8 @@ autoapi_options = [
     'special-members',
 ]  # 'private-members',
 autoapi_python_class_content = 'both'
-#autoapi_python_class_content = 'class'
-# Add any paths that contain templates here, relative to this directory.
-# templates_path = ['_templates']
+autoapi_keep_files = True
+
 from sphinx_gallery.sorting import ExplicitOrder
 sphinx_gallery_conf = {
     'examples_dirs': '../../examples',  # path to your example scripts

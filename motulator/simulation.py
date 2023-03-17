@@ -1,4 +1,3 @@
-# pylint: disable=invalid-name
 """Simulation environment."""
 
 import numpy as np
@@ -22,7 +21,6 @@ class Delay:
 
     """
 
-    # pylint: disable=too-few-public-methods
     def __init__(self, length=1, elem=3):
         self.data = length*[elem*[0]]  # Creates a zero list
 
@@ -104,7 +102,6 @@ class CarrierCmp:
 
     """
 
-    # pylint: disable=too-few-public-methods
     def __init__(self, N=2**12, return_complex=True):
         self.N = N
         self.return_complex = return_complex
@@ -233,7 +230,7 @@ class Simulation:
         try:
             self.simulation_loop(t_stop, max_step)
         except FloatingPointError:
-            print('Invalid value encountered at %.2f seconds.' % self.mdl.t0)
+            print(f'Invalid value encountered at {self.mdl.t0:.2f} seconds.')
         # Call the post-processing functions
         self.mdl.post_process()
         self.ctrl.post_process()

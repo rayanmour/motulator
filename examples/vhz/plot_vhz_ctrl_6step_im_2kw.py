@@ -12,9 +12,9 @@ the sampling frequency.
 # %%
 # Import the package.
 
+from time import time
 import numpy as np
 import motulator as mt
-from time import time
 
 # %%
 # Compute base values based on the nominal values (just for figures).
@@ -36,8 +36,8 @@ mdl = mt.InductionMotorDrive(motor, mech, conv)  # System model
 # Control system (parametrized as open-loop V/Hz control).
 
 ctrl = mt.InductionMotorVHzCtrl(
-    mt.InductionMotorVHzCtrlPars(R_s=0, R_R=0, k_u=0, k_w=0, six_step=True,
-                                 T_s=250e-6))
+    mt.InductionMotorVHzCtrlPars(
+        R_s=0, R_R=0, k_u=0, k_w=0, six_step=True, T_s=250e-6))
 
 # %%
 # Set the speed reference and the external load torque. More complicated
@@ -54,7 +54,6 @@ mdl.mech.tau_L_w = lambda w_M: k*w_M**2*np.sign(w_M)
 # External load torque could be set here, now zero
 mdl.mech.tau_L_t = lambda t: (t > 1.)*base.tau_nom*0
 
-
 # %%
 # Create the simulation object and simulate it. The option `pwm=True` enables
 # the model for the carrier comparison.
@@ -62,7 +61,7 @@ mdl.mech.tau_L_t = lambda t: (t > 1.)*base.tau_nom*0
 sim = mt.Simulation(mdl, ctrl, pwm=True)
 t_start = time()  # Start the timer
 sim.simulate(t_stop=2)
-print('\nExecution time: {:.2f} s'.format((time() - t_start)))
+print(f'\nExecution time: {(time() - t_start):.2f} s')
 
 # %%
 # Plot results in per-unit values.

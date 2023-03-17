@@ -1,4 +1,3 @@
-# pylint: disable=invalid-name
 """
 Continuous-time models for synchronous motor drives.
 
@@ -7,7 +6,6 @@ Peak-valued complex space vectors are used. The default values correspond to a
 
 """
 import numpy as np
-
 from motulator.helpers import Bunch
 
 
@@ -51,7 +49,7 @@ class SynchronousMotorDrive:
 
         Returns
         -------
-        x0 : complex list, length 2
+        x0 : complex list, length 3
             Initial values of the state variables.
 
         """
@@ -171,8 +169,9 @@ class SynchronousMotorDriveTwoMass(SynchronousMotorDrive):
 
     def get_initial_values(self):
         """Extend the base class."""
-        x0 = super().get_initial_values() + [self.mech.w_L0,
-                                             self.mech.theta_ML0]
+        x0 = super().get_initial_values() + [
+            self.mech.w_L0, self.mech.theta_ML0
+        ]
         return x0
 
     def set_initial_values(self, t0, x0):

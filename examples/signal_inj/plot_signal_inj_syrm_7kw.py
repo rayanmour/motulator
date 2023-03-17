@@ -11,8 +11,8 @@ Square-wave signal injection is used with a simple phase-locked loop.
 # Import the packages.
 
 import numpy as np
-import motulator as mt
 import matplotlib.pyplot as plt
+import motulator as mt
 
 # %%
 # Compute base values based on the nominal values (just for figures).
@@ -80,9 +80,10 @@ mdl = sim.mdl.data  # Continuous-time data
 ctrl = sim.ctrl.data  # Discrete-time data
 plt.figure()
 plt.plot(mdl.t, mdl.theta_m, label=r'$\vartheta_\mathrm{m}$')
-plt.step(ctrl.t, ctrl.theta_m, where='post',
-         label=r'$\hat \vartheta_\mathrm{m}$')
+plt.step(
+    ctrl.t, ctrl.theta_m, where='post', label=r'$\hat \vartheta_\mathrm{m}$')
 plt.legend()
 plt.xlim(0, 4)
 plt.xlabel('Time (s)')
 plt.ylabel('Electrical angle (rad)')
+plt.show()
