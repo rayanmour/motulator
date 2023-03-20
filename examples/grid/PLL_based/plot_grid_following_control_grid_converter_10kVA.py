@@ -34,7 +34,7 @@ REMARK:
     if you do not want to simulate any DC bus, you should define
     dc_model = None. This would make the DC voltage constant, using the
     value given in the converter model.
-    Do not forget also to activate/desactivate the dc-bus control
+    Do not forget also to activate/deactivate the dc-bus control
 """
     
 if dc_model == None:
@@ -45,8 +45,6 @@ else:
 pars = mt.GridFollowingCtrlPars(
             L_f=10e-3,
             R_f=0,
-            #C_dc = 1e-3,  # why this is needed if dc-voltage is not controlled? (could there be default value)
-            on_v_dc=False,  # what is this?
             S_base = 10e3,
             i_max = 1.5,
             )
@@ -74,6 +72,6 @@ sim.simulate(t_stop = .1)
 # Print the execution time
 print('\nExecution time: {:.2f} s'.format((time.time() - start_time)))
 
-# Plot results in per unit values
-mt.plot_grid(sim)
-#mt.plot_grid(sim, base=base_values)
+# Plot results in SI or per unit values
+#mt.plot_grid(sim)
+mt.plot_grid(sim, base=base_values)

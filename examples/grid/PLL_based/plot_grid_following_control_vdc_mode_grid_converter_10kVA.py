@@ -1,16 +1,13 @@
 """
-Example simulation script: 10kVA grid-following controlled converter connected
-to a perfect AC voltage source (grid) with an L filter.
-
+Example simulation script: 10-kVA grid converter connected to a symmetrical
+three-phase AC voltage source (grid) through an inductive filter.
     
-The grid-following control (PLL-based, current source mode) includes
-    - (optional) DC-bus voltage controller;
+The control system includes
+    - DC-bus voltage controller;
     - Phase-Locked Loop (PLL) to synchronize with the grid;
-    - dq current reference generation;
-    - vector current controller based on PI.
-
+    - Current reference generation;
+    - Proportional-integral (PI) vector current controller
 """
-
 
 # %%
 # Import the packages.
@@ -24,9 +21,8 @@ start_time = time.time()
 
 # %%
 # Compute base values based on the nominal values (just for figures).
-
-base = mt.BaseValues(
-    U_nom=370, I_nom=15.5, f_nom=105.8, tau_nom=20.1, P_nom=6.9e3, p=2)
+base_values = mt.BaseValuesElectrical(
+    U_nom=400, I_nom=14.5, f_nom=50.0, P_nom=10e3)
 
 
 # %%
@@ -40,7 +36,7 @@ REMARK:
     if you do not want to simulate any DC grid, you should define
     dc_model = None. This would make the DC voltage constant, using the
     value given in the converter model.
-    Do not forget also to activate/desactivate the dc-bus control
+    Do not forget also to activate/deactivate the dc-bus control
 """
     
 if dc_model == None:
@@ -88,5 +84,6 @@ sim.simulate(t_stop = .1)
 # Print the execution time
 print('\nExecution time: {:.2f} s'.format((time.time() - start_time)))
 
-# Plot results in per unit values
+# Plot results in SI or per unit values
 mt.plot_grid(sim)
+#mt.plot_grid(sim, base=base_values)

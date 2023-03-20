@@ -313,13 +313,11 @@ def plot_grid(sim, t_range=None, base=None):
         #ax1.set_ylabel('Grid voltage (V)')
     else:
         # Subplot 1: DC-bus voltage
-        ax1.plot(mdl.t, mdl.u_dc, linewidth=LW)
-        ax1.plot(ctrl.t, ctrl.u_dc_ref, '--', linewidth=LW)
-        ax1.legend([r'$u_{dc}$',r'$u_{dc}^*$'],
+        ax1.plot(mdl.t, mdl.u_dc/base.u, linewidth=LW)
+        ax1.plot(ctrl.t, ctrl.u_dc_ref/base.u, '--', linewidth=LW)
+        ax1.legend([r'$u_{dc}$',r'$u_{dc,ref}$'],
                    prop={'size': FL}, loc= 'upper right')
-        # ax1.step(ctrl.t, ctrl.w_s, where='post')  # Stator frequency
         ax1.set_xlim(t_range)
-        ax1.set_ylim([550, 700])
         ax1.set_xticklabels([])
         #ax1.set_ylabel('DC-bus voltage (V)')
     
