@@ -14,7 +14,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass, field
 import numpy as np
-from sklearn.utils import Bunch
+from motulator.helpers import Bunch
 from motulator.helpers import abc2complex
 from motulator.control.common import Ctrl, PWM
 

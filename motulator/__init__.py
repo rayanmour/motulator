@@ -101,6 +101,7 @@ from motulator.control.power_synchronization import (
 # Import other useful stuff
 from motulator.helpers import (
     BaseValues,
+    BaseValuesElectrical,
     abc2complex,
     complex2abc,
     Sequence,
