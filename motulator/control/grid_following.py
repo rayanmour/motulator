@@ -97,7 +97,7 @@ class GridFollowingCtrl(Ctrl):
         self.R_f = pars.R_f
         # Activation/deactivation of the DC voltage controller
         self.on_v_dc = pars.on_v_dc
-        # DC-voltage reference
+        # DC voltage reference
         self.u_dc_ref = pars.u_dc_ref
         # Calculated current controller gains:
         self.k_p_i = pars.alpha_c*pars.L_f-pars.R_f
@@ -144,11 +144,8 @@ class GridFollowingCtrl(Ctrl):
         """
         # Measure the feedback signals
         i_c_abc = mdl.rl_model.meas_currents()
-        u_g_abc = mdl.grid_model.meas_voltages(self.t)
         u_dc = mdl.conv.meas_dc_voltage()
-        u_cs = np.exp(+1j*self.theta_p)*self.u_c_ref_lim
-        u_gs = abc2complex(u_g_abc)
-        u_pcc_abc = mdl.rl_model.meas_pcc_voltage(u_cs, u_gs)
+        u_pcc_abc = mdl.rl_model.meas_pcc_voltage()
         
         # Define the active and reactive power references at the given time
         u_dc_ref = self.u_dc_ref(self.t)
@@ -236,7 +233,7 @@ class PLL:
     u_g_q : float
         q-axis of the PCC voltage (V)
     abs_u_g : float
-        amplitude of the voltage waveform (in stator coordinates), in V
+        amplitude of the voltage waveform, in V
     theta_pll : float
         estimated phase angle (in rad).
         
@@ -284,7 +281,7 @@ class PLL:
         u_g_ab = u_g_abc[0] - u_g_abc[1] # calculation of phase-to-phase voltages
         u_g_bc = u_g_abc[1] - u_g_abc[2] # calculation of phase-to-phase voltages
         
-        # Calculation of ug in complex form (stator coordinates)
+        # Calculation of ug in complex form (stationary coordinates)
         u_g_s = (2/3)*u_g_ab +(1/3)*u_g_bc + 1j*(np.sqrt(3)/(3))*u_g_bc
         # And then in rotor coordinates:
         u_g = u_g_s*np.exp(-1j*self.theta_p)
@@ -366,7 +363,7 @@ class CurrentRefCalc:
             
         """ 
     
-        # Calculation of the current references in the stator frame:
+        # Calculation of the current references in the stationary frame:
         i_c_ref = 2*p_g_ref/(3*self.u_gN) -2*1j*q_g_ref/(3*self.u_gN)  
         
         return i_c_ref

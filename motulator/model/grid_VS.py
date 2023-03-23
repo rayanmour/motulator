@@ -40,9 +40,8 @@ class Grid:
 
     def voltages(self, t):
         """
-        Compute the voltage in stator frame at the grid output:
-           (remark: I think it could also be possible to implement this function using theta_0 instead)
-
+        Compute the voltage in stationary frame at the grid output:
+           
         Parameters
         ----------
         t : float

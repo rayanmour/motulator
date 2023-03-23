@@ -76,7 +76,7 @@ class InductiveGrid:
             Phase currents.
 
         """
-        # Stator current space vector in stator coordinates
+        # Line current space vector in stationary coordinates
         i_g_abc = complex2abc(self.i_gs0)  # + noise + offset ...
         return i_g_abc
 
@@ -101,11 +101,14 @@ class InverterToInductiveGrid:
         Grid resistance (in Ohm)
 
     """
-    def __init__(self, L_f = 6e-3, R_f = 0, L_g=30e-3, R_g=0, u_cs=lambda t: 0j):
+    def __init__(self, L_f = 6e-3, R_f = 0, L_g=30e-3, R_g=0):
         self.L_f = L_f
         self.R_f = R_f
         self.L_g = L_g
         self.R_g = R_g
+        # Storing the voltage from the derivative function
+        self.u_cs0 = 400*np.sqrt(2/3) + 0j
+        self.u_gs0 = 400*np.sqrt(2/3) + 0j
         # Initial values
         self.i_gs0 = 0j
 
@@ -137,6 +140,11 @@ class InverterToInductiveGrid:
         R_t = self.R_f + self.R_g
         
         di_gs = (u_cs - u_gs - R_t*i_gs)/L_t
+        
+        # Update the stored voltages
+        self.u_cs0 = u_cs
+        self.u_gs0 = u_gs
+        
         return di_gs
 
     def meas_currents(self):
@@ -149,11 +157,11 @@ class InverterToInductiveGrid:
             Phase currents.
 
         """
-        # Stator current space vector in stator coordinates
+        # Line current space vector in stationary coordinates
         i_g_abc = complex2abc(self.i_gs0)  # + noise + offset ...
         return i_g_abc
     
-    def meas_pcc_voltage(self, u_cs, u_gs):
+    def meas_pcc_voltage(self):
         """
         Measure the phase currents at the end of the sampling period.
 
@@ -164,7 +172,7 @@ class InverterToInductiveGrid:
 
         """
         # PCC voltage in alpha-beta coordinates (neglecting resistive effects)
-        u_pccs = self.L_g /(self.L_f + self.L_g)*u_cs + self.L_f /(self.L_f + self.L_g)*u_gs
+        u_pccs = self.L_g /(self.L_f + self.L_g)*self.u_cs0 + self.L_f /(self.L_f + self.L_g)*self.u_gs0
         
         u_pcc_abc = complex2abc(u_pccs)  # + noise + offset ...
         return u_pcc_abc

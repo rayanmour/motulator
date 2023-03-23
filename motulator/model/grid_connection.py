@@ -3,7 +3,7 @@
 This module contains continuous-time models for grid connected converters.
 
 Peak-valued complex space vectors are used. The space vector models are
-implemented in stator coordinates.
+implemented in stationary coordinates.
 
 """
 from __future__ import annotations

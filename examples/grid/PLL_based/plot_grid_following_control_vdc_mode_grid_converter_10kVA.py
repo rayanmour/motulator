@@ -63,15 +63,13 @@ ctrl = mt.GridFollowingCtrl(pars)
 # Set the active and reactive power references
 ctrl.q_g_ref = lambda t: (t > .04)*(4e3)
 
-# DC-side current (only if dc model is used)
+# DC-side current (seen as a disturbance from the converter perspective)
 if dc_model != None:
     mdl.dc_model.i_dc = lambda t: (t > .06)*(10)
 
 # AC-voltage magnitude (to simulate voltage dips or short-circuits)
 u_g_abs_var =  lambda t: np.sqrt(2/3)*400
-mdl.grid_model.u_g_abs_A = u_g_abs_var #phase a
-mdl.grid_model.u_g_abs_B = u_g_abs_var #phase b
-mdl.grid_model.u_g_abs_C = u_g_abs_var #phase c
+mdl.grid_model.u_g_abs = u_g_abs_var # voltage magnitude variation
 
 # DC voltage reference
 ctrl.u_dc_ref = lambda t: 600 + (t > .02)*(50)
