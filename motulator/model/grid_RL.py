@@ -16,7 +16,6 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 # %%
-@dataclass
 class InductiveGrid:
     """
     Inductive grid model where one of the output voltage is controllable.
@@ -31,21 +30,17 @@ class InductiveGrid:
         Grid inductance (in H)
     R_g : float
         Grid resistance (in Ohm)
-    u_c_s : function
-        External voltage at the impedance outputs, `ucs(t)`.
-
-    Returns
-    -------
-    complex list, length 1
-        Line current in stator frame, igs
+    u_cs : function
+        External voltage at the impedance outputs, `u_cs(t)`.
 
     """
-    L_g: float = 10e-3
-    R_g: float = 0
-    u_cs: Callable[[complex], complex] = field(repr=False,
-                                                default=lambda t: 0+1j*0)
-    # Initial values
-    i_gs0: complex = field(repr=False, default=0j)
+    
+    def __init__(self, L_g=10e-3, R_g=0, u_cs=lambda t: 0j):
+        self.L_g = L_g
+        self.R_g = R_g
+        self.u_cs = u_cs
+        # Initial values
+        self.i_gs0 = 0j
 
     
     def f(self, t, i_gs, u_gs, w_g):
@@ -72,7 +67,7 @@ class InductiveGrid:
         """
         di_gs = (self.u_cs(t) - u_gs - self.R_g*i_gs)/self.L_g
         return di_gs
-
+    
     def meas_currents(self):
         """
         Measure the phase currents at the end of the sampling period.
@@ -88,7 +83,6 @@ class InductiveGrid:
         return i_g_abc
 
 # %%
-@dataclass
 class InverterToInductiveGrid:
     """
     Inductive grid model with a connection made to the inverter outputs.
@@ -99,21 +93,23 @@ class InverterToInductiveGrid:
 
     Parameters
     ----------
+    L_f : float
+        Filter inductance (in H)
+    R_f : float
+        Filter resistance (in Ohm)
     L_g : float
         Grid inductance (in H)
     R_g : float
         Grid resistance (in Ohm)
 
-    Returns
-    -------
-    complex list, length 1
-        Line current in stator frame, igs
-
     """
-    L_g: float = 10e-3
-    R_g: float = 0
-    # Initial values
-    i_gs0: complex = field(repr=False, default=0j)
+    def __init__(self, L_f = 6e-3, R_f = 0, L_g=30e-3, R_g=0, u_cs=lambda t: 0j):
+        self.L_f = L_f
+        self.R_f = R_f
+        self.L_g = L_g
+        self.R_g = R_g
+        # Initial values
+        self.i_gs0 = 0j
 
     
     def f(self, i_gs, u_cs, u_gs, w_g):
@@ -138,7 +134,11 @@ class InverterToInductiveGrid:
             Time derivative of the state vector, igs (line current)
 
         """
-        di_gs = (u_cs - u_gs - self.R_g*i_gs)/self.L_g
+        # Calculation of the total impedance
+        L_t = self.L_f + self.L_g
+        R_t = self.R_f + self.R_g
+        
+        di_gs = (u_cs - u_gs - R_t*i_gs)/L_t
         return di_gs
 
     def meas_currents(self):
@@ -154,3 +154,19 @@ class InverterToInductiveGrid:
         # Stator current space vector in stator coordinates
         i_g_abc = complex2abc(self.i_gs0)  # + noise + offset ...
         return i_g_abc
+    
+    def meas_pcc_voltage(self, u_cs, u_gs):
+        """
+        Measure the phase currents at the end of the sampling period.
+
+        Returns
+        -------
+        u_pcc_abc : 3-tuple of floats
+            Phase voltage at the point of common coupling (PCC).
+
+        """
+        # PCC voltage in alpha-beta coordinates (neglecting resistive effects)
+        u_pccs = self.L_g /(self.L_f + self.L_g)*u_cs + self.L_f /(self.L_f + self.L_g)*u_gs
+        
+        u_pcc_abc = complex2abc(u_pccs)  # + noise + offset ...
+        return u_pcc_abc

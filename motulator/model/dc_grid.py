@@ -15,7 +15,6 @@ from motulator.helpers import (
     )
 
 # %%
-@dataclass
 class DcGrid:
     """
     DC grid
@@ -30,20 +29,16 @@ class DcGrid:
      G_dc : float
          DC grid conductance (in Siemens)
     i_dc : function
-        External dc current, seen as disturbance, `idc(t)`.
-
-    Returns
-    -------
-    real list, length 1
-        DC voltage at the capacitance level udc
+        External dc current, seen as disturbance, `i_dc(t)`.
 
      """
-    C_dc: float = 1e-3
-    G_dc: float = 0
-    i_dc: Callable[[float], float] = field(repr=False, default=lambda t: 0)
-    # Initial values
-    u_dc0: float = field(repr=False, default=540) #same value as converter.py
-    # Initial value of the DC-bus voltage
+    
+    def __init__(self, C_dc=1e-3, G_dc=0, i_dc=lambda t: 0, u_dc0 = 650):
+         self.C_dc = C_dc
+         self.G_dc = G_dc
+         self.i_dc = i_dc
+         # Initial values
+         self.u_dc0 = u_dc0
     
     def dc_current(self, i_c_abc, q):
         """
@@ -94,7 +89,7 @@ class DcGrid:
         Returns
         -------
         du_dc: float
-            Time derivative of the state variable, udc (DC capacitance voltage)
+            Time derivative of the state variable, u_dc (capacitance voltage)
 
         """
         

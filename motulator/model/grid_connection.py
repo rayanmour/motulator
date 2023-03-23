@@ -7,7 +7,6 @@ implemented in stator coordinates.
 
 """
 from __future__ import annotations
-from dataclasses import dataclass, field
 import numpy as np
 from motulator.helpers import Bunch
 from motulator.helpers import (
@@ -16,7 +15,6 @@ from motulator.helpers import (
     )
 
 # %%
-@dataclass
 class GridCompleteModel:
     """
     Continuous-time model for a grid model with an RL impedance model.
@@ -100,7 +98,7 @@ class GridCompleteModel:
         u_cs = self.conv.ac_voltage(self.conv.q, self.conv.u_dc0)
         u_gs = self.grid_model.voltages(t)
         # State derivatives
-        rl_f = self.rl_model.f(i_gs, u_cs, u_gs, self.grid_model.w_g)
+        rl_f = self.rl_model.f(i_gs, u_cs, u_gs, self.grid_model.w_N)
         # List of state derivatives 
         return rl_f
 
@@ -130,12 +128,12 @@ class GridCompleteModel:
 
         # Some useful variables
         self.data.u_gs = self.grid_model.voltages(self.data.t)
-        self.data.theta = np.mod(self.data.t*self.grid_model.w_g, 2*np.pi)
+        self.data.theta = np.mod(self.data.t*self.grid_model.w_N, 2*np.pi)
         self.data.u_cs = self.conv.ac_voltage(self.data.q, self.conv.u_dc0)
 
 
+
 # %%
-@dataclass
 class ACDCGridCompleteModel:
     """
     Continuous-time model for a grid model with an RL impedance model.
@@ -227,7 +225,7 @@ class ACDCGridCompleteModel:
         q = self.conv.q
         i_g_abc = complex2abc(i_gs)
         # State derivatives
-        rl_f = self.rl_model.f(i_gs, u_cs, u_gs, self.grid_model.w_g)
+        rl_f = self.rl_model.f(i_gs, u_cs, u_gs, self.grid_model.w_N)
         dc_f = self.dc_model.f(t, u_dc, i_g_abc, q)
         # List of state derivatives 
         return [rl_f, dc_f]
@@ -264,5 +262,5 @@ class ACDCGridCompleteModel:
         # Some useful variables
         self.data.i_L = np.asarray(self.data.i_L)
         self.data.u_gs = self.grid_model.voltages(self.data.t)
-        self.data.theta = np.mod(self.data.t*self.grid_model.w_g, 2*np.pi)
+        self.data.theta = np.mod(self.data.t*self.grid_model.w_N, 2*np.pi)
         self.data.u_cs = self.conv.ac_voltage(self.data.q, self.conv.u_dc0)
