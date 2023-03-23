@@ -5,8 +5,6 @@ an RL line.
 
 """
 from __future__ import annotations
-from collections.abc import Callable
-from dataclasses import dataclass, field
 import numpy as np
 from motulator.helpers import complex2abc
 

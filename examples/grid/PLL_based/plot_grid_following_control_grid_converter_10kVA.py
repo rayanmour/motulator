@@ -25,8 +25,8 @@ base_values = mt.BaseValuesElectrical(
 
 # %%
 # Configure the system model
-rl_model = mt.InverterToInductiveGrid(L_g=10e-3, R_g=0)
-grid_model = mt.Grid(U_gN=np.sqrt(2/3)*400, w_g=2*np.pi*50)
+rl_model = mt.InverterToInductiveGrid(L_f=10e-3, L_g=0, R_g=0)
+grid_model = mt.Grid(U_gN=np.sqrt(2/3)*400, w_N=2*np.pi*50)
 dc_model = None
 conv = mt.Inverter(u_dc=650)
 """
@@ -60,10 +60,7 @@ ctrl.q_g_ref = lambda t: (t > .04)*(4e3)
 
 # AC-voltage magnitude (to simulate voltage dips or short-circuits)
 u_g_abs_var =  lambda t: np.sqrt(2/3)*400
-mdl.grid_model.u_g_abs_A = u_g_abs_var # a-phase
-mdl.grid_model.u_g_abs_B = u_g_abs_var # b-phase
-mdl.grid_model.u_g_abs_C = u_g_abs_var # c-phase
-
+mdl.grid_model.u_g_abs = u_g_abs_var # voltage magnitude variation
 
 # Create the simulation object and simulate it
 sim = mt.Simulation(mdl, ctrl, pwm=True)

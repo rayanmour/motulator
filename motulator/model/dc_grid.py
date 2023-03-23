@@ -7,7 +7,6 @@ source and the capacitance dynamics need to be modeled.
 
 """
 from __future__ import annotations
-from dataclasses import dataclass, field
 import numpy as np
 from motulator.helpers import (
     complex2abc,

@@ -95,40 +95,31 @@ class GridFollowingCtrl(Ctrl):
         self.f_sw = pars.f_sw
         self.L_f = pars.L_f
         self.R_f = pars.R_f
-        self.C_dc = pars.C_dc
-        self.p_max = pars.p_max
-        self.w_0_dc = pars.w_0_dc
-        self.zeta_dc = pars.zeta_dc
-        self.alpha_c = pars.alpha_c
-        self.w_0_pll = pars.w_0_pll
+        # Activation/deactivation of the DC voltage controller
         self.on_v_dc = pars.on_v_dc
+        # DC-voltage reference
         self.u_dc_ref = pars.u_dc_ref
         # Calculated current controller gains:
-        self.k_p_i = pars.alpha_c*pars.L_f-pars.R_f # (-Rf term can be added,
-                                            # see S. Akkari's PhD thesis, 2016)
+        self.k_p_i = pars.alpha_c*pars.L_f-pars.R_f
+        # (-Rf term can be added, see S. Akkari's PhD thesis, 2016)
         self.k_i_i = np.power(pars.alpha_c,2)*pars.L_f
         self.r_i = pars.alpha_c*pars.L_f
         # Definition of the base values
-        self.S_base = pars.S_base
         self.I_base = np.sqrt(2)*pars.S_base/(3*pars.u_gN)
         self.Z_base = pars.u_gN/(self.I_base*np.sqrt(2))
         self.L_base = self.Z_base/pars.w_g
         self.C_base = 1/(pars.w_g*self.Z_base)
         # Calculated maximum current in A
-        self.k_scal = pars.k_scal
         self.I_max = pars.i_max*pars.k_scal*np.sqrt(2)*self.I_base
         # Calculated PLL estimator gains
         self.k_p_pll = 2*pars.zeta*pars.w_0_pll/pars.u_gN
         self.k_i_pll = pars.w_0_pll*pars.w_0_pll/pars.u_gN
-        # Calculated DC voltage controller gains
+        # Sampling time
         self.T_s = pars.T_s
-        self.k_p_dc = 2*pars.zeta_dc*pars.w_0_dc
-        self.k_i_dc = pars.w_0_dc*pars.w_0_dc
         # States
         self.u_c_i = 0j
-        self.w_pll = pars.w_g
         self.theta_p = 0
-        self.p_g_i = 0 # integrator state of the DC-bus controller
+        self.u_c_ref_lim = pars.u_gN + 1j*0
         ####
         self.desc = pars.__repr__()
         
@@ -155,6 +146,9 @@ class GridFollowingCtrl(Ctrl):
         i_c_abc = mdl.rl_model.meas_currents()
         u_g_abc = mdl.grid_model.meas_voltages(self.t)
         u_dc = mdl.conv.meas_dc_voltage()
+        u_cs = np.exp(+1j*self.theta_p)*self.u_c_ref_lim
+        u_gs = abc2complex(u_g_abc)
+        u_pcc_abc = mdl.rl_model.meas_pcc_voltage(u_cs, u_gs)
         
         # Define the active and reactive power references at the given time
         u_dc_ref = self.u_dc_ref(self.t)
@@ -165,16 +159,18 @@ class GridFollowingCtrl(Ctrl):
         else:
             p_g_ref = self.p_g_ref(self.t)
             q_g_ref = self.q_g_ref(self.t)
-
-        
+      
         # Generate the current references
         i_c_ref = self.current_ref_calc.output(p_g_ref, q_g_ref)
-        
+                
         # Use of PLL to bring ugq to zero
-        u_g_q, abs_u_g, theta_pll = self.pll.output(u_g_abc)
+        u_g_q, abs_u_g, w_pll, theta_pll = self.pll.output(u_pcc_abc)
 
         #Transform the measured current in dq frame
         i_c = np.exp(-1j*theta_pll)*abc2complex(i_c_abc)
+        
+        # Calculation of PCC voltage in synchronous frame
+        u_pcc = np.exp(-1j*theta_pll)*abc2complex(u_pcc_abc)
         
         #Calculation of the modulus of current reference
         i_abs = np.abs(i_c_ref)
@@ -199,15 +195,17 @@ class GridFollowingCtrl(Ctrl):
 
         # Data logging
         data = Bunch(
-            err_i = err_i, w_pll = self.w_pll, theta_pll = theta_pll,
+            err_i = err_i, w_pll = w_pll, theta_pll = theta_pll,
                      u_c_ref = u_c_ref, u_c_ref_lim = u_c_ref_lim, i_c = i_c,
                      abs_u_g =abs_u_g, d_abc_ref = d_abc_ref, i_c_ref = i_c_ref,
                      u_dc=u_dc, t=self.t, p_g_ref=p_g_ref,
-                     u_dc_ref = u_dc_ref, q_g_ref=q_g_ref
+                     u_dc_ref = u_dc_ref, q_g_ref=q_g_ref, u_pcc = u_pcc,
                      )
         self.save(data)
 
         # Update the states
+        self.theta_p = theta_pll
+        self.u_c_ref_lim = u_c_ref_lim
         self.u_c_i = self.u_c_i + self.T_s*self.k_i_i*(err_i + (u_c_ref_lim - u_c_ref)/self.k_p_i)
         self.update_clock(self.T_s)
         self.pwm.update(u_c_ref_lim)
@@ -302,7 +300,7 @@ class PLL:
         # Estimated phase angle
         theta_pll = self.theta_p + self.T_s*w_g_pll
         
-        return u_g_q, abs_u_g, theta_pll
+        return u_g_q, abs_u_g, w_g_pll, theta_pll
     
         
     def update(self, u_g_q):
@@ -400,6 +398,7 @@ class DCVoltageControl:
        self.k_p_dc = 2*pars.zeta_dc*pars.w_0_dc
        self.k_i_dc = pars.w_0_dc*pars.w_0_dc
        self.C_dc = pars.C_dc
+       # Saturation of power reference
        self.p_max = pars.p_max
        self.p_g_i = 0 # integrator state of the controller
     

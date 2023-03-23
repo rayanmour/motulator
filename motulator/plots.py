@@ -272,7 +272,7 @@ def plot_grid(sim, t_range=None, base=None):
     """
     FS = 16 # Font size of the plots axis
     FL = 16 # Font size of the legends only
-    LW = 1 # Line width in plots
+    LW = 3 # Line width in plots
     
     
     mdl = sim.mdl.data      # Continuous-time data
@@ -295,8 +295,8 @@ def plot_grid(sim, t_range=None, base=None):
     u_g_abc = complex2abc(mdl.u_gs).T
     
     # Calculation of active and reactive powers
-    p_g = 1.5*np.asarray(np.real(mdl.u_gs*np.conj(mdl.i_gs)))
-    q_g = 1.5*np.asarray(np.imag(mdl.u_gs*np.conj(mdl.i_gs)))
+    p_g = 1.5*np.asarray(np.real(ctrl.u_pcc*np.conj(ctrl.i_c)))
+    q_g = 1.5*np.asarray(np.imag(ctrl.u_pcc*np.conj(ctrl.i_c)))
     p_g_ref = np.asarray(ctrl.p_g_ref)
     q_g_ref = np.asarray(ctrl.q_g_ref)
     
@@ -331,7 +331,7 @@ def plot_grid(sim, t_range=None, base=None):
     # Subplot 3: Phase angles
     ax3.plot(mdl.t, mdl.theta, linewidth=LW)
     ax3.plot(ctrl.t, ctrl.theta_pll, '--', linewidth=LW)
-    ax3.legend([r'$\theta_{g}$',r'$\theta_{pll}$']
+    ax3.legend([r'$\theta_{g}$',r'$\theta_{c}$']
                ,prop={'size': FL}, loc= 'upper right')
     ax3.set_xlim(t_range)
 
@@ -370,8 +370,8 @@ def plot_grid(sim, t_range=None, base=None):
     fig, (ax1, ax2,ax3) = plt.subplots(3, 1, figsize=(10, 7))
 
     # Subplot 1: Active and reactive power
-    ax1.plot(mdl.t, p_g/base.p, linewidth=LW)
-    ax1.plot(mdl.t, q_g/base.p, linewidth=LW)
+    ax1.plot(ctrl.t, p_g/base.p, linewidth=LW)
+    ax1.plot(ctrl.t, q_g/base.p, linewidth=LW)
     ax1.plot(ctrl.t, (p_g_ref/base.p), '--', linewidth=LW)
     ax1.plot(ctrl.t, (q_g_ref/base.p), '--', linewidth=LW)
     ax1.legend([r'$p_{g}$',r'$q_{g}$',r'$p_{g,ref}$',r'$q_{g,ref}$'],
@@ -393,10 +393,10 @@ def plot_grid(sim, t_range=None, base=None):
     # Subplot 3: Converter voltage reference and grid voltage
     ax3.plot(ctrl.t,np.real(ctrl.u_c_ref_lim/base.u), 
              ctrl.t,np.imag(ctrl.u_c_ref_lim/base.u), linewidth=LW)
-    ax3.plot(mdl.t,np.real(mdl.u_gs/base.u*np.exp(-1j*mdl.theta)),'--',
-             mdl.t,np.imag(mdl.u_gs/base.u*np.exp(-1j*mdl.theta)),'--', 
+    ax3.plot(ctrl.t,np.real(ctrl.u_pcc/base.u),'--',
+             ctrl.t,np.imag(ctrl.u_pcc/base.u),'--', 
              linewidth=LW)
-    ax3.legend([r'$u_{c,ref}^d$', r'$u_{c,ref}^q$', r'$u_g^d$', r'$u_g^q$'], 
+    ax3.legend([r'$u_{c,ref}^d$', r'$u_{c,ref}^q$', r'$u_{pcc}^d$', r'$u_{pcc}^q$'], 
                 prop={'size': FS}, loc= 'upper right')
     ax3.set_xlim(t_range)
     
