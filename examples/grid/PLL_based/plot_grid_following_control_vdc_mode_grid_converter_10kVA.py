@@ -69,11 +69,10 @@ if dc_model != None:
 
 # AC-voltage magnitude (to simulate voltage dips or short-circuits)
 u_g_abs_var =  lambda t: np.sqrt(2/3)*400
-mdl.grid_model.u_g_abs = u_g_abs_var # voltage magnitude variation
+mdl.grid_model.u_g_abs = u_g_abs_var # grid voltage magnitude
 
 # DC voltage reference
 ctrl.u_dc_ref = lambda t: 600 + (t > .02)*(50)
-
 
 # Create the simulation object and simulate it
 sim = mt.simulation.Simulation(mdl, ctrl, pwm=True)
