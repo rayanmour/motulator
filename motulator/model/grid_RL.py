@@ -104,7 +104,7 @@ class InverterToInductiveGrid:
         self.R_f = R_f
         self.L_g = L_g
         self.R_g = R_g
-        # Storing the voltage from the derivative function
+        # Storing the input and output voltages of the RL line
         self.u_cs0 = U_gN + 0j
         self.u_gs0 = U_gN + 0j
         # Initial values
