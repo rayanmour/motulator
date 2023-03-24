@@ -27,7 +27,7 @@ base_values = mt.BaseValuesElectrical(
 # %%
 # Configure the system model (grid model)
 rl_model = mt.InverterToInductiveGrid(L_f = 6e-3, L_g=67.8e-3, R_g=0)
-grid_model = mt.Grid(U_gN=np.sqrt(2/3)*400, w_N=2*np.pi*50)
+grid_model = mt.Grid(w_N=2*np.pi*50)
 dc_model = None
 conv = mt.Inverter(u_dc=650)
 

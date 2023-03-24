@@ -425,7 +425,7 @@ class CurrentCtrl:
         Returns
         -------
         u_c_ref : complex
-            converter voltage output (V).
+            converter voltage reference (V).
         i_c_ref : complex
             converter current reference in dq frame (A).
 
@@ -528,9 +528,9 @@ class DCVoltageControl:
         err_dc: float
             DC capacitance energy error signal
         p_dc_ref: float
-            power reference based on DC voltage controller
+            power reference based on DC voltage controller (W)
         p_dc_ref_lim: float
-            saturated power reference based on DC voltage controller
+            saturated power reference based on DC voltage controller (W)
 
         """
 

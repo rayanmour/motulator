@@ -41,7 +41,7 @@ class InductiveGrid:
         self.i_gs0 = 0j
 
     
-    def f(self, t, i_gs, u_gs, w_g):
+    def f(self, t, i_gs, u_gs):
         # pylint: disable=R0913
         """
         Compute the state derivatives.
@@ -54,8 +54,6 @@ class InductiveGrid:
             Line current.
         u_gs : complex
             Grid voltage.
-        w_g : float
-            Grid angular speed (in mechanical rad/s).
 
         Returns
         -------
@@ -101,20 +99,19 @@ class InverterToInductiveGrid:
         Grid resistance (in Ohm)
 
     """
-    def __init__(self, L_f = 6e-3, R_f = 0, L_g=30e-3, R_g=0):
+    def __init__(self, U_gN=400*np.sqrt(2/3), L_f = 6e-3, R_f = 0, L_g=30e-3, R_g=0):
         self.L_f = L_f
         self.R_f = R_f
         self.L_g = L_g
         self.R_g = R_g
         # Storing the voltage from the derivative function
-        self.u_cs0 = 400*np.sqrt(2/3) + 0j
-        self.u_gs0 = 400*np.sqrt(2/3) + 0j
-        self.u_pccs0 = 400*np.sqrt(2/3) + 0j 
+        self.u_cs0 = U_gN + 0j
+        self.u_gs0 = U_gN + 0j
         # Initial values
         self.i_gs0 = 0j
 
     
-    def f(self, i_gs, u_cs, u_gs, w_g):
+    def f(self, i_gs, u_cs, u_gs):
         # pylint: disable=R0913
         """
         Compute the state derivatives.
@@ -122,18 +119,16 @@ class InverterToInductiveGrid:
         Parameters
         ----------
         i_gs : complex
-            Line current.
+            Line current (A).
         u_cs : complex
-            Input voltage.
+            Input voltage (V).
         u_gs : complex
-            Output voltage.
-        w_g : float
-            Grid angular speed (in rad/s).
+            Output voltage (V).
 
         Returns
         -------
         di_gs: complex
-            Time derivative of the state vector, igs (line current)
+            Time derivative of the complex state i_gs (line current, in A)
 
         """
         # Calculation of the total impedance
@@ -152,16 +147,16 @@ class InverterToInductiveGrid:
         Parameters
         ----------
         i_gs : complex
-            Line current.
+            Line current (A).
         u_gs : complex
-            Output voltage.
+            Output voltage (V).
         w_g : float
             Grid angular speed (in rad/s).
 
         Returns
         -------
         u_cs : complex
-            Input voltage.
+            Input voltage (V).
 
         """
         

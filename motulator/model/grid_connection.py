@@ -104,7 +104,7 @@ class GridCompleteModel:
         u_cs = self.conv.ac_voltage(self.conv.q, self.conv.u_dc0)
         u_gs = self.grid_model.voltages(t)
         # State derivatives
-        rl_f = self.rl_model.f(i_gs, u_cs, u_gs, self.grid_model.w_N)
+        rl_f = self.rl_model.f(i_gs, u_cs, u_gs)
         # List of state derivatives 
         return rl_f
 
@@ -238,7 +238,7 @@ class ACDCGridCompleteModel:
         q = self.conv.q
         i_g_abc = complex2abc(i_gs)
         # State derivatives
-        rl_f = self.rl_model.f(i_gs, u_cs, u_gs, self.grid_model.w_N)
+        rl_f = self.rl_model.f(i_gs, u_cs, u_gs)
         dc_f = self.dc_model.f(t, u_dc, i_g_abc, q)
         # List of state derivatives 
         return [rl_f, dc_f]

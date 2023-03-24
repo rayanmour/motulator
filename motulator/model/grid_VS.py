@@ -32,9 +32,8 @@ class Grid:
         3-phase grid voltage magnitude (rms)
     """
     
-    def __init__(self, U_gN=400*np.sqrt(2/3), w_N=2*np.pi*50,
+    def __init__(self, w_N=2*np.pi*50,
                  u_g_abs=lambda t: 400*np.sqrt(2/3)):
-        self.U_gN = U_gN
         self.w_N = w_N
         self.u_g_abs = u_g_abs
 
