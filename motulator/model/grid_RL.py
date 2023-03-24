@@ -109,6 +109,7 @@ class InverterToInductiveGrid:
         # Storing the voltage from the derivative function
         self.u_cs0 = 400*np.sqrt(2/3) + 0j
         self.u_gs0 = 400*np.sqrt(2/3) + 0j
+        self.u_pccs0 = 400*np.sqrt(2/3) + 0j 
         # Initial values
         self.i_gs0 = 0j
 
@@ -123,11 +124,11 @@ class InverterToInductiveGrid:
         i_gs : complex
             Line current.
         u_cs : complex
-            Point of Common Coupling (PCC) voltage.
+            Input voltage.
         u_gs : complex
-            Grid voltage.
+            Output voltage.
         w_g : float
-            Grid angular speed (in mechanical rad/s).
+            Grid angular speed (in rad/s).
 
         Returns
         -------
@@ -141,11 +142,33 @@ class InverterToInductiveGrid:
         
         di_gs = (u_cs - u_gs - R_t*i_gs)/L_t
         
-        # Update the stored voltages
-        self.u_cs0 = u_cs
-        self.u_gs0 = u_gs
-        
         return di_gs
+    
+    def input_voltages(self, i_gs, u_gs, w_g):
+        """
+        Compute the voltage at the input of the inductor based on the output
+        voltage value and the line current in the stationary frame.
+           
+        Parameters
+        ----------
+        i_gs : complex
+            Line current.
+        u_gs : complex
+            Output voltage.
+        w_g : float
+            Grid angular speed (in rad/s).
+
+        Returns
+        -------
+        u_cs : complex
+            Input voltage.
+
+        """
+        
+        # computation of input voltage
+        u_cs = u_gs + 1j*w_g*(self.L_f + self.L_g)*i_gs
+        
+        return u_cs
 
     def meas_currents(self):
         """
@@ -161,6 +184,7 @@ class InverterToInductiveGrid:
         i_g_abc = complex2abc(self.i_gs0)  # + noise + offset ...
         return i_g_abc
     
+    
     def meas_pcc_voltage(self):
         """
         Measure the phase currents at the end of the sampling period.
@@ -172,7 +196,7 @@ class InverterToInductiveGrid:
 
         """
         # PCC voltage in alpha-beta coordinates (neglecting resistive effects)
-        u_pccs = self.L_g /(self.L_f + self.L_g)*self.u_cs0 + self.L_f /(self.L_f + self.L_g)*self.u_gs0
+        u_pccs = (self.L_g /(self.L_f + self.L_g))*self.u_cs0 + (self.L_f /(self.L_f + self.L_g))*self.u_gs0
         
         u_pcc_abc = complex2abc(u_pccs)  # + noise + offset ...
         return u_pcc_abc

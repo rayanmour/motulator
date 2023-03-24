@@ -1,6 +1,6 @@
 # pylint: disable=C0103
 '''
-This module contains Power Synchronization Control (PSC) for grid-connected converters
+This module contains Power Synchronization Control (PSC) for grid converters
 
 This control scheme is based on the updated version presented in [1]. More info
 can be found in this reference.
@@ -28,6 +28,8 @@ class PSCtrlPars:
     # General control parameters
     p_g_ref: Callable[[float], float] = field(
         repr=False, default=lambda t: (t > .2)*(5e3)) # active power reference
+    q_g_ref: Callable[[float], float] = field(
+        repr=False, default=lambda t: 0) # reactive power reference
     w_c_ref: Callable[[float], float] = field(
         repr=False, default=lambda t: 2*np.pi*50) # frequency reference
     v_ref: Callable[[float], float] = field(
@@ -43,10 +45,13 @@ class PSCtrlPars:
     # Rating of the converter
     S_base: float = 10e3 # in VA
     
+    # Control of the converter voltage or the PCC voltage
+    on_v_pcc: bool = 0 # put 1 to control PCC voltage. 0 if not.
+    
     # Power synchronization loop control parameters
-    R_a: float = 4.4 # Damping resistance, in Ohm
+    r_a: float = .2 # Damping resistance, in per units
     k_scal: float = 3/2 # scaling ratio of the abc/dq transformation
-    on_rf: bool = 1 # put 1 to activate reference-feedforward. 0 is regular PSC
+    on_rf: bool = 1 # Boolean: 1 to activate reference-feedforward. 0 is regular PSC
     
     # Low pass filter for the current controller of PSC
     w_0_cc: float = 2*np.pi*50 # filter undamped natural frequency, in rad/s.
@@ -95,40 +100,27 @@ class PSCtrl(Ctrl):
         self.u_g_N = pars.u_g_N
         self.w_g = pars.w_g
         self.f_sw = pars.f_sw
-        self.L_f = pars.L_f
-        self.R_f = pars.R_f
-        self.C_dc = pars.C_dc
-        self.p_max = pars.p_max
-        self.w_0_dc = pars.w_0_dc
-        self.zeta_dc = pars.zeta_dc
-        self.R_a = pars.R_a
-        self.k_scal = pars.k_scal
-        self.on_rf = pars.on_rf
-        self.on_v_dc = pars.on_v_dc
-        # References sent from the user
-        self.p_g_ref = pars.p_g_ref
-        self.w_c_ref = pars.w_c_ref
-        self.v_ref = pars.v_ref
-        self.u_dc_ref = pars.u_dc_ref
-        # Calculated gains for PSC
-        self.k_p_psc = pars.w_g*pars.R_a/(pars.k_scal*pars.u_g_N*pars.u_g_N)
-        self.w_0_cc = pars.w_0_cc
-        self.K_cc = pars.K_cc
         # Definition of the base values
         self.S_base = pars.S_base
         self.I_base = np.sqrt(2)*pars.S_base/(3*pars.u_g_N)
         self.Z_base = pars.u_g_N/(self.I_base*np.sqrt(2))
         self.L_base = self.Z_base/pars.w_g
-        self.C_base = 1/(pars.w_g*self.Z_base)
-        # Calculated DC voltage controller gains
-        self.T_s = pars.T_s
-        self.k_p_dc = 2*pars.zeta_dc*pars.w_0_dc
-        self.k_i_dc = pars.w_0_dc*pars.w_0_dc
+        # Activation of reference feedforward action
+        self.on_rf = pars.on_rf
+        # Activation of the PCC voltage control option
+        self.on_v_pcc = pars.on_v_pcc
+        # Activation of DC-voltage controller
+        self.on_v_dc = pars.on_v_dc
+        # References sent from the user
+        self.p_g_ref = pars.p_g_ref
+        self.q_g_ref = pars.q_g_ref
+        self.w_c_ref = pars.w_c_ref
+        self.v_ref = pars.v_ref
+        self.u_dc_ref = pars.u_dc_ref
+        # If the pcc voltage should be used as controlled voltage
         # States
-        self.xc_old = 0+0j # Integrator state of the current low pass filter
         self.theta_psc = 0 # Integrator state of the phase angle estimation
         self.u_c_ref_lim = pars.u_g_N + 1j*0
-        self.p_g_i = 0 # Integrator state of the DC-bus controller
         ####
         self.desc = pars.__repr__()
         
@@ -155,6 +147,10 @@ class PSCtrl(Ctrl):
         i_c_abc = mdl.rl_model.meas_currents()
         u_g_abc = mdl.grid_model.meas_voltages(self.t)
         u_dc = mdl.conv.meas_dc_voltage()
+        u_pcc_abc = mdl.rl_model.meas_pcc_voltage()
+        
+        # Calculation of PCC voltage in synchronous frame
+        u_pcc = np.exp(-1j*self.theta_psc)*abc2complex(u_pcc_abc)
         
         # Define the active and reactive power references at the given time
         u_dc_ref = self.u_dc_ref(self.t)
@@ -173,16 +169,19 @@ class PSCtrl(Ctrl):
         # Transform the measured current in dq frame
         i_c = np.exp(-1j*self.theta_psc)*abc2complex(i_c_abc)
         
+        # Calculation of active and reactive powers:
+        if self.on_v_pcc:
+            p_calc, q_calc = self.power_calc.output(i_c, u_pcc)
+        else:   
+            p_calc, q_calc = self.power_calc.output(i_c, self.u_c_ref_lim)
+        
         # Synchronization through active power variations
-        p_calc, q_calc = self.power_calc.output(i_c, self.u_c_ref_lim)
         w_c, theta_c = self.power_synch.output(p_calc, p_g_ref, w_c_ref)
-        
-        
+
         # Voltage reference in synchronous coordinates
-        u_c_ref, i_c_ref = self.current_ctrl.output(i_c, p_g_ref, v_ref)
+        u_c_ref, i_c_ref = self.current_ctrl.output(i_c, p_g_ref, v_ref, w_c_ref)
         
-        # Use the function from control commons:
-        # d_abc_ref = self.pwm(uc_ref, udc, self.theta_p, self.wg)
+        # Compute the PWM
         d_abc_ref, u_c_ref_lim = self.pwm.output(u_c_ref, u_dc,
                                            self.theta_psc, self.w_g)
         
@@ -192,7 +191,7 @@ class PSCtrl(Ctrl):
         u_g_bc = u_g_abc[1] - u_g_abc[2] # calculation of phase-to-phase voltages
         # Calculation of ug in complex form (stator coordinates)
         u_g_s = (2/3)*u_g_ab +(1/3)*u_g_bc + 1j*(np.sqrt(3)/(3))*u_g_bc
-        # And then in rotor coordinates:
+        # And then in converter coordinates:
         u_g = u_g_s*np.exp(-1j*self.theta_psc)
         abs_u_g = np.abs(u_g)
 
@@ -202,7 +201,7 @@ class PSCtrl(Ctrl):
                      u_c_ref = u_c_ref, u_c_ref_lim = u_c_ref_lim, i_c = i_c,
                      abs_u_g = abs_u_g, d_abc_ref = d_abc_ref, i_c_ref = i_c_ref,
                      u_dc=u_dc, t=self.t, p_g_ref=p_g_ref, abs_u_c = abs_u_c,
-                     u_dc_ref = u_dc_ref, q_g_ref=q_g_ref,
+                     u_dc_ref = u_dc_ref, q_g_ref=q_g_ref, u_pcc = u_pcc,
                      )
         self.save(data)
 
@@ -231,9 +230,8 @@ class PowerCalc:
     Internal controller power calculator
     
     This class is used to calculate the active and reactive powers at the
-    converter outputs by using the voltage reference signals sent to the PWM
-    and a current measurement used in the control. Thus, it does not require
-    any voltage measures.
+    converter outputs by using voltage and current in complex form
+    used in the control.
     
     """
     
@@ -258,17 +256,17 @@ class PowerCalc:
         ----------
         
         i_c : complex
-            converter current in dq frame (A).
+            current in dq frame (A).
         u_c : complex
-            converter output voltage in dq frame (V).
+            voltage in dq frame (V).
         
     
         Returns
         -------
         p_calc : float
-            calculated active power at the converter outputs
+            calculated active power
         q_calc : float
-            calculated reactive power at the converter outputs
+            calculated reactive power
             
         """ 
     
@@ -283,19 +281,11 @@ class PowerCalc:
 class PowerSynch:
     
     """
-    active power/frequency synchronizing loop.
+    Active power/frequency synchronizing loop.
+    
+    This control loop is used to synchronize with the grid using the active
+    power variations compared to the active power reference.
 
-    Parameters
-    ----------
-    ug_abc : ndarray, shape (3,)
-        Phase voltages at the PCC.
-
-    -------
-    w_c : float
-        estimated converter frequency (rad/s)
-    theta_c : float
-        estimated converter phase angle (rad)
-        
     """
         
         
@@ -308,8 +298,14 @@ class PowerSynch:
            Control parameters.
     
        """
+       # Definition of the base values
+       self.S_base = pars.S_base
+       self.I_base = np.sqrt(2)*pars.S_base/(3*pars.u_g_N)
+       self.Z_base = pars.u_g_N/(self.I_base*np.sqrt(2))
+       # controller parameters
        self.T_s = pars.T_s
-       self.k_p_psc = pars.w_g*pars.R_a/(pars.k_scal*pars.u_g_N*pars.u_g_N)
+       self.R_a = pars.r_a*self.Z_base
+       self.k_p_psc = pars.w_g*self.R_a/(pars.k_scal*pars.u_g_N*pars.u_g_N)
        # Initial states
        self.theta_p = 0
     
@@ -325,12 +321,12 @@ class PowerSynch:
             calculated active power at the converter outputs (W).
         pg_ref : float
             active power reference (W).
-        wc_ref : float
+        w_c_ref : float
             frequency reference (rad/s).
     
         Returns
         -------
-        wc : float
+        w_c : float
             estimated converter frequency (rad/s).
         theta_c : float
             estimated converter phase angle (rad).
@@ -367,18 +363,14 @@ class PowerSynch:
 class CurrentCtrl:
     
     """
-    active power/frequency synchronizing loop.
-
-    Parameters
-    ----------
-    ug_abc : ndarray, shape (3,)
-        Phase voltages at the PCC.
-
-    -------
-    wc : float
-        estimated converter frequency (rad/s)
-    theta_c : float
-        estimated converter phase angle (rad)
+    PSC-based current controller.
+    
+    PSC makes the converter operate as a voltage source, however, this block
+    is used to damp the current oscillations and limit the current
+    flowing through the converter to avoid physical damages of the device.
+    
+    It is important to note that this block uses P-type controller and can thus
+    encounter steady-state error when the current reference is saturated.
         
     """
         
@@ -392,24 +384,32 @@ class CurrentCtrl:
            Control parameters.
     
        """
+       # Definition of the base values
+       self.S_base = pars.S_base
+       self.I_base = np.sqrt(2)*pars.S_base/(3*pars.u_g_N)
+       self.Z_base = pars.u_g_N/(self.I_base*np.sqrt(2))
+       # controller parameters
        self.T_s = pars.T_s
-       self.R_a = pars.R_a
+       self.R_a = pars.r_a*self.Z_base
        self.L_f = pars.L_f
        self.w_0_cc = pars.w_0_cc
        self.K_cc = pars.K_cc
        self.k_scal= pars.k_scal
+       # activation/deactivation of reference feedforward action
        self.on_rf = pars.on_rf
+       # activation/deactivation of PCC voltage control option
+       self.on_v_pcc = pars.on_v_pcc
        # Calculated maximum current in A
        self.I_base = np.sqrt(2)*pars.S_base/(3*pars.u_g_N)
        self.I_max = pars.i_max*pars.k_scal*np.sqrt(2)*self.I_base
        #initial states
-       self.x_c_old =0j # -0.02130445565544287+0.49521020010304434j
+       self.x_c_old =0j 
     
             
-    def output(self, i_c, p_g_ref, v_ref):
+    def output(self, i_c, p_g_ref, v_ref, w_c_ref):
         
         """
-        Compute the estimated frequency and phase angle using the PSC
+        Compute the converter voltage reference signal
     
         Parameters
         ----------
@@ -419,6 +419,8 @@ class CurrentCtrl:
             active power reference (W).
         v_ref : float
             converter voltage magnitude reference (V).
+        w_c_ref : float
+            converter frequency reference (rad/s).
     
         Returns
         -------
@@ -441,7 +443,7 @@ class CurrentCtrl:
         else:
             i_c_ref = i_c_filt
             
-        #Calculation of the modulus of current reference
+        # Calculation of the modulus of current reference
         i_abs = np.abs(i_c_ref)
         i_c_d_ref = np.real(i_c_ref)
         i_c_q_ref = np.imag(i_c_ref)
@@ -455,7 +457,7 @@ class CurrentCtrl:
         
                 
         # Calculation of converter voltage output (reference sent to PWM)
-        u_c_ref = v_c_ref + self.R_a*(i_c_ref - i_c)
+        u_c_ref = v_c_ref + self.R_a*(i_c_ref - i_c) + self.on_v_pcc*1j*self.L_f*w_c_ref*i_c
         
         
         return u_c_ref, i_c_ref
@@ -503,6 +505,7 @@ class DCVoltageControl:
        self.k_p_dc = 2*pars.zeta_dc*pars.w_0_dc
        self.k_i_dc = pars.w_0_dc*pars.w_0_dc
        self.C_dc = pars.C_dc
+       # Saturation of power reference
        self.p_max = pars.p_max
        self.p_g_i = 0 # integrator state of the controller
     
@@ -552,5 +555,4 @@ class DCVoltageControl:
     def update(self, err_dc, p_dc_ref, p_dc_ref_lim):
              
         # Update the integrator state (the last term is antiwindup)
-        self.p_g_i = self.p_g_i + self.T_s*self.k_i_dc*(err_dc + (p_dc_ref_lim - p_dc_ref)/self.k_p_dc)
-    
+        self.p_g_i = self.p_g_i + self.T_s*self.k_i_dc*(err_dc + (p_dc_ref_lim - p_dc_ref)/self.k_p_dc) 

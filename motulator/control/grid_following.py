@@ -95,6 +95,9 @@ class GridFollowingCtrl(Ctrl):
         self.f_sw = pars.f_sw
         self.L_f = pars.L_f
         self.R_f = pars.R_f
+        # Power references
+        self.p_g_ref = pars.p_g_ref
+        self.q_g_ref = pars.q_g_ref
         # Activation/deactivation of the DC voltage controller
         self.on_v_dc = pars.on_v_dc
         # DC voltage reference

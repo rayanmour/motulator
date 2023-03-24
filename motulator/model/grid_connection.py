@@ -73,7 +73,13 @@ class GridCompleteModel:
         """
         self.t0 = t0
         self.rl_model.i_gs0 = x0[0]
-
+        
+        # calculation of input voltage based on current and grid voltages            
+        u_cs0 = self.rl_model.input_voltages(x0[0], self.grid_model.voltages(t0), self.grid_model.w_N)
+        
+        # update stored input and output voltages of the RL line
+        self.rl_model.u_gs0 = self.grid_model.voltages(t0)
+        self.rl_model.u_cs0 = u_cs0
 
     def f(self, t, x):
         """
@@ -115,6 +121,7 @@ class GridCompleteModel:
         self.data.t.extend(sol.t)
         self.data.i_gs.extend(sol.y[0])
         self.data.q.extend(sol.q)
+
                                     
     def post_process(self):
         """
@@ -198,7 +205,13 @@ class ACDCGridCompleteModel:
         self.rl_model.i_gs0 = x0[0]
         self.dc_model.u_dc0 = x0[1].real
         self.conv.u_dc0 = x0[1].real
-
+        
+        # calculation of input voltage based on current and grid voltages            
+        u_cs0 = self.rl_model.input_voltages(x0[0], self.grid_model.voltages(t0), self.grid_model.w_N)
+        
+        # update stored input and output voltages of the RL line
+        self.rl_model.u_gs0 = self.grid_model.voltages(t0)
+        self.rl_model.u_cs0 = u_cs0
 
     def f(self, t, x):
         """
