@@ -193,8 +193,8 @@ class InverterToInductiveGrid:
         """
         
         # calculation of complex impedances
-        Z_f = self.R_f +  1j*self.w_N*self.L_f
-        Z_g = self.R_g +  1j*self.w_N*self.L_g
+        Z_f = self.R_f + 1j*self.w_N*self.L_f
+        Z_g = self.R_g + 1j*self.w_N*self.L_g
         
         # PCC voltage in alpha-beta coordinates
         u_pccs = (Z_g /(Z_f + Z_g))*self.u_cs0 + (Z_f /(Z_f + Z_g))*self.u_gs0
