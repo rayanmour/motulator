@@ -99,11 +99,12 @@ class InverterToInductiveGrid:
         Grid resistance (in Ohm)
 
     """
-    def __init__(self, U_gN=400*np.sqrt(2/3), L_f = 6e-3, R_f = 0, L_g=30e-3, R_g=0):
+    def __init__(self, U_gN=400*np.sqrt(2/3), w_N=2*np.pi*50, L_f = 6e-3, R_f=0, L_g=30e-3, R_g=0):
         self.L_f = L_f
         self.R_f = R_f
         self.L_g = L_g
         self.R_g = R_g
+        self.w_N = w_N
         # Storing the input and output voltages of the RL line
         self.u_cs0 = U_gN + 0j
         self.u_gs0 = U_gN + 0j
@@ -139,7 +140,7 @@ class InverterToInductiveGrid:
         
         return di_gs
     
-    def input_voltages(self, i_gs, u_gs, w_g):
+    def input_voltages(self, i_gs, u_gs):
         """
         Compute the voltage at the input of the inductor based on the output
         voltage value and the line current in the stationary frame.
@@ -161,7 +162,7 @@ class InverterToInductiveGrid:
         """
         
         # computation of input voltage
-        u_cs = u_gs + 1j*w_g*(self.L_f + self.L_g)*i_gs
+        u_cs = u_gs + ((self.R_f + self.R_g) + 1j*self.w_N*(self.L_f + self.L_g))*i_gs
         
         return u_cs
 
@@ -190,8 +191,13 @@ class InverterToInductiveGrid:
             Phase voltage at the point of common coupling (PCC).
 
         """
-        # PCC voltage in alpha-beta coordinates (neglecting resistive effects)
-        u_pccs = (self.L_g /(self.L_f + self.L_g))*self.u_cs0 + (self.L_f /(self.L_f + self.L_g))*self.u_gs0
+        
+        # calculation of complex impedances
+        Z_f = self.R_f +  1j*self.w_N*self.L_f
+        Z_g = self.R_g +  1j*self.w_N*self.L_g
+        
+        # PCC voltage in alpha-beta coordinates
+        u_pccs = (Z_g /(Z_f + Z_g))*self.u_cs0 + (Z_f /(Z_f + Z_g))*self.u_gs0
         
         u_pcc_abc = complex2abc(u_pccs)  # + noise + offset ...
         return u_pcc_abc

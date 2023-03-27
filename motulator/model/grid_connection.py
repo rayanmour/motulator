@@ -75,7 +75,7 @@ class GridCompleteModel:
         self.rl_model.i_gs0 = x0[0]
         
         # calculation of input voltage based on current and grid voltages            
-        u_cs0 = self.rl_model.input_voltages(x0[0], self.grid_model.voltages(t0), self.grid_model.w_N)
+        u_cs0 = self.rl_model.input_voltages(x0[0], self.grid_model.voltages(t0))
         
         # update stored input and output voltages of the RL line
         self.rl_model.u_gs0 = self.grid_model.voltages(t0)
