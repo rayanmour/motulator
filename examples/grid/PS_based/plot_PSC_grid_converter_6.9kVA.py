@@ -52,7 +52,7 @@ ctrl = mt.PSCtrl(pars)
 
 # %%
 
-# Set the active power reference that are inputs to the control system
+# Set the active power reference that is an input to the control system
 ctrl.p_g_ref = lambda t: (t > .2)*(2.3e3) + (t > .5)*(2.3e3) + (t > .8)*(2.3e3) - (t > 1.2)*(6.9e3)
 
 # AC-voltage magnitude (to simulate voltage dips or short-circuits)

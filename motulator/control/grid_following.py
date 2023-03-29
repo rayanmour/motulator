@@ -104,7 +104,6 @@ class GridFollowingCtrl(Ctrl):
         self.u_dc_ref = pars.u_dc_ref
         # Calculated current controller gains:
         self.k_p_i = pars.alpha_c*pars.L_f-pars.R_f
-        # (-Rf term can be added, see S. Akkari's PhD thesis, 2016)
         self.k_i_i = np.power(pars.alpha_c,2)*pars.L_f
         self.r_i = pars.alpha_c*pars.L_f
         # Definition of the base values

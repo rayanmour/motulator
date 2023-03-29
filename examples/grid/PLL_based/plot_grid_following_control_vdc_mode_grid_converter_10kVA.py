@@ -60,7 +60,7 @@ ctrl = mt.GridFollowingCtrl(pars)
 
 # %%
 
-# Set the active and reactive power referencesgit st
+# Set the reactive power reference
 ctrl.q_g_ref = lambda t: (t > .04)*(4e3)
 
 # DC-side current (seen as a disturbance from the converter perspective)
