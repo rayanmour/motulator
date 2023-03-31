@@ -28,7 +28,7 @@ class Grid:
         nominal voltage peak value (phase to ground)
     w_g : float
         grid constant frequency
-    e_g_abs : function
+    u_g_abs : function
         3-phase grid voltage magnitude
     """
     

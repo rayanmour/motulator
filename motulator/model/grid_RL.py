@@ -132,10 +132,7 @@ class InverterToInductiveGrid:
         u_pcc_abc : 3-tuple of floats
             Phase voltage at the point of common coupling (PCC).
 
-        """
-        
-        # PCC voltage in alpha-beta coordinates
-        u_pccs = self.pcc_voltages(self.i_gs0,self.u_cs0,self.u_gs0)
-        
+        """  
+        # PCC voltage space vector in stationary coordinates
         u_pcc_abc = complex2abc(self.u_pccs0)  # + noise + offset ...
         return u_pcc_abc
