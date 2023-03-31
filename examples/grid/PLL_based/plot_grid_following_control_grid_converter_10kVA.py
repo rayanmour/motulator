@@ -59,8 +59,8 @@ ctrl.p_g_ref = lambda t: (t > .02)*(5e3)
 ctrl.q_g_ref = lambda t: (t > .04)*(4e3)
 
 # AC-voltage magnitude (to simulate voltage dips or short-circuits)
-u_g_abs_var =  lambda t: np.sqrt(2/3)*400
-mdl.grid_model.u_g_abs = u_g_abs_var # grid voltage magnitude
+e_g_abs_var =  lambda t: np.sqrt(2/3)*400
+mdl.grid_model.e_g_abs = e_g_abs_var # grid voltage magnitude
 
 # Create the simulation object and simulate it
 sim = mt.Simulation(mdl, ctrl, pwm=False)

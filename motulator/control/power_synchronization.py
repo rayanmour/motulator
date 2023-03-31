@@ -46,7 +46,7 @@ class PSCtrlPars:
     S_base: float = 10e3 # in VA
     
     # Control of the converter voltage or the PCC voltage
-    on_v_pcc: bool = 0 # put 1 to control PCC voltage. 0 if not.
+    on_u_g: bool = 0 # put 1 to control PCC voltage. 0 if not.
     
     # Power synchronization loop control parameters
     R_a: float = 4.6 # Damping resistance, in Ohm
@@ -103,7 +103,7 @@ class PSCtrl(Ctrl):
         # Activation of reference feedforward action
         self.on_rf = pars.on_rf
         # Activation of the PCC voltage control option
-        self.on_v_pcc = pars.on_v_pcc
+        self.on_u_g = pars.on_u_g
         # Activation of DC-voltage controller
         self.on_v_dc = pars.on_v_dc
         # References sent from the user
@@ -140,12 +140,11 @@ class PSCtrl(Ctrl):
         """
         # Measure the feedback signals
         i_c_abc = mdl.rl_model.meas_currents()
-        u_g_abc = mdl.grid_model.meas_voltages(self.t)
         u_dc = mdl.conv.meas_dc_voltage()
-        u_pcc_abc = mdl.rl_model.meas_pcc_voltage()
+        u_g_abc = mdl.rl_model.meas_pcc_voltage()
         
         # Calculation of PCC voltage in synchronous frame
-        u_pcc = np.exp(-1j*self.theta_psc)*abc2complex(u_pcc_abc)
+        u_g = np.exp(-1j*self.theta_psc)*abc2complex(u_g_abc)
         
         # Define the active and reactive power references at the given time
         u_dc_ref = self.u_dc_ref(self.t)
@@ -165,8 +164,8 @@ class PSCtrl(Ctrl):
         i_c = np.exp(-1j*self.theta_psc)*abc2complex(i_c_abc)
         
         # Calculation of active and reactive powers:
-        if self.on_v_pcc:
-            p_calc, q_calc = self.power_calc.output(i_c, u_pcc)
+        if self.on_u_g:
+            p_calc, q_calc = self.power_calc.output(i_c, u_g)
         else:   
             p_calc, q_calc = self.power_calc.output(i_c, self.u_c_ref_lim)
         
@@ -179,24 +178,14 @@ class PSCtrl(Ctrl):
         # Compute the PWM
         d_abc_ref, u_c_ref_lim = self.pwm.output(u_c_ref, u_dc,
                                            self.theta_psc, self.w_g)
-        
-        # For data plotting only
-        abs_u_c = np.abs(u_c_ref_lim)
-        u_g_ab = u_g_abc[0] - u_g_abc[1] # calculation of phase-to-phase voltages
-        u_g_bc = u_g_abc[1] - u_g_abc[2] # calculation of phase-to-phase voltages
-        # Calculation of ug in complex form (stator coordinates)
-        u_g_s = (2/3)*u_g_ab +(1/3)*u_g_bc + 1j*(np.sqrt(3)/(3))*u_g_bc
-        # And then in converter coordinates:
-        u_g = u_g_s*np.exp(-1j*self.theta_psc)
-        abs_u_g = np.abs(u_g)
 
         # Data logging
         data = Bunch(
             w_c = w_c, theta_pll = self.theta_psc, v_ref = v_ref, w_c_ref = w_c_ref,
                      u_c_ref = u_c_ref, u_c_ref_lim = u_c_ref_lim, i_c = i_c,
-                     abs_u_g = abs_u_g, d_abc_ref = d_abc_ref, i_c_ref = i_c_ref,
-                     u_dc=u_dc, t=self.t, p_g_ref=p_g_ref, abs_u_c = abs_u_c,
-                     u_dc_ref = u_dc_ref, q_g_ref=q_g_ref, u_pcc = u_pcc,
+                     d_abc_ref = d_abc_ref, i_c_ref = i_c_ref,
+                     u_dc=u_dc, t=self.t, p_g_ref=p_g_ref, u_dc_ref = u_dc_ref,
+                     q_g_ref=q_g_ref, u_g = u_g
                      )
         self.save(data)
 
@@ -388,7 +377,7 @@ class CurrentCtrl:
        # activation/deactivation of reference feedforward action
        self.on_rf = pars.on_rf
        # activation/deactivation of PCC voltage control option
-       self.on_v_pcc = pars.on_v_pcc
+       self.on_u_g = pars.on_u_g
        # Calculated maximum current in A
        self.I_max = pars.i_max*pars.k_scal*np.sqrt(2)*self.I_base
        #initial states
@@ -446,7 +435,7 @@ class CurrentCtrl:
         
                 
         # Calculation of converter voltage output (reference sent to PWM)
-        u_c_ref = v_c_ref + self.R_a*(i_c_ref - i_c) + self.on_v_pcc*1j*self.L_f*w_c_ref*i_c
+        u_c_ref = v_c_ref + self.R_a*(i_c_ref - i_c) + self.on_u_g*1j*self.L_f*w_c_ref*i_c
         
         
         return u_c_ref, i_c_ref

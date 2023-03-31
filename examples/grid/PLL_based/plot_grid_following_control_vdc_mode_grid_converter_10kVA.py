@@ -68,8 +68,8 @@ if dc_model != None:
     mdl.dc_model.i_dc = lambda t: (t > .06)*(10)
 
 # AC-voltage magnitude (to simulate voltage dips or short-circuits)
-u_g_abs_var =  lambda t: np.sqrt(2/3)*400
-mdl.grid_model.u_g_abs = u_g_abs_var # grid voltage magnitude
+e_g_abs_var =  lambda t: np.sqrt(2/3)*400
+mdl.grid_model.e_g_abs = e_g_abs_var # grid voltage magnitude
 
 # DC voltage reference
 ctrl.u_dc_ref = lambda t: 600 + (t > .02)*(50)

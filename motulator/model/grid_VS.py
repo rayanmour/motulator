@@ -28,14 +28,14 @@ class Grid:
         nominal voltage peak value (phase to ground)
     w_g : float
         grid constant frequency
-    u_g_abs : function
+    e_g_abs : function
         3-phase grid voltage magnitude
     """
     
     def __init__(self, w_N=2*np.pi*50,
-                 u_g_abs=lambda t: 400*np.sqrt(2/3)):
+                 e_g_abs=lambda t: 400*np.sqrt(2/3)):
         self.w_N = w_N
-        self.u_g_abs = u_g_abs
+        self.e_g_abs = e_g_abs
 
     def voltages(self, t):
         """
@@ -48,7 +48,7 @@ class Grid:
 
         Returns
         -------
-        u_gs: complex
+        e_gs: complex
             grid complex voltage.
 
         """
@@ -56,13 +56,13 @@ class Grid:
         theta = self.w_N*t        
         
         # Calculation of the three-phase voltage
-        u_g_a = self.u_g_abs(t)*np.cos(theta)
-        u_g_b = self.u_g_abs(t)*np.cos(theta-2*np.pi/3)
-        u_g_c = self.u_g_abs(t)*np.cos(theta-4*np.pi/3)
+        e_g_a = self.e_g_abs(t)*np.cos(theta)
+        e_g_b = self.e_g_abs(t)*np.cos(theta-2*np.pi/3)
+        e_g_c = self.e_g_abs(t)*np.cos(theta-4*np.pi/3)
         
         
-        u_gs = abc2complex([u_g_a, u_g_b, u_g_c])
-        return u_gs
+        e_gs = abc2complex([e_g_a, e_g_b, e_g_c])
+        return e_gs
 
 
     def meas_voltages(self, t):
@@ -71,10 +71,10 @@ class Grid:
 
         Returns
         -------
-        u_g_abc : 3-tuple of floats
+        e_g_abc : 3-tuple of floats
             Phase voltages.
 
         """
         # Grid voltage
-        u_g_abc = complex2abc(self.voltages(t))  # + noise + offset ...
-        return u_g_abc
+        e_g_abc = complex2abc(self.voltages(t))  # + noise + offset ...
+        return e_g_abc

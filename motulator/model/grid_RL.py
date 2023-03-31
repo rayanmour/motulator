@@ -39,19 +39,16 @@ class InverterToInductiveGrid:
         self.R_f = R_f
         self.L_g = L_g
         self.R_g = R_g
-        # Storing the input and output voltages of the RL line
-        self.u_cs0 = U_gN + 0j
-        self.u_gs0 = U_gN + 0j
         # Storing the PCC voltage value
-        self.u_pccs0 = U_gN + 0j
+        self.u_gs0 = U_gN + 0j
         # Initial values
         self.i_gs0 = 0j
 
 
 
-    def pcc_voltages(self, i_gs, u_cs, u_gs):
+    def pcc_voltages(self, i_gs, u_cs, e_gs):
         """
-        Compute the PCC voltage, located in between the filter and the line
+        Compute the PCC voltage, located in-between the filter and the line
         impedances
 
         Parameters
@@ -60,27 +57,27 @@ class InverterToInductiveGrid:
             Line current (A).
         u_cs : complex
             Converter-side voltage (V).
-        u_gs : complex
+        e_gs : complex
             Grid-side voltage (V).
 
         Returns
         -------
-        u_pccs : complex
+        u_gs : complex
             Voltage at the point of common coupling (PCC).
 
         """
         # calculation of voltage-related term
-        v_tu = (self.L_g/(self.L_g+self.L_f))*u_cs + (self.L_f/(self.L_g+self.L_f))*u_gs
+        v_tu = (self.L_g/(self.L_g+self.L_f))*u_cs + (self.L_f/(self.L_g+self.L_f))*e_gs
         # calculation of current-related term
         v_ti = ((self.R_g*self.L_f - self.R_f*self.L_g)/(self.L_g+self.L_f))*i_gs
         
         # PCC voltage in alpha-beta coordinates
-        u_pccs = v_tu + v_ti
+        u_gs = v_tu + v_ti
         
-        return u_pccs
+        return u_gs
     
     
-    def f(self, i_gs, u_cs, u_gs):
+    def f(self, i_gs, u_cs, e_gs):
         # pylint: disable=R0913
         """
         Compute the state derivatives.
@@ -91,7 +88,7 @@ class InverterToInductiveGrid:
             Line current (A).
         u_cs : complex
             Converter-side voltage (V).
-        u_gs : complex
+        e_gs : complex
             Grid-side voltage (V).
 
         Returns
@@ -104,7 +101,7 @@ class InverterToInductiveGrid:
         L_t = self.L_f + self.L_g
         R_t = self.R_f + self.R_g
         
-        di_gs = (u_cs - u_gs - R_t*i_gs)/L_t
+        di_gs = (u_cs - e_gs - R_t*i_gs)/L_t
         
         return di_gs
 
@@ -129,10 +126,10 @@ class InverterToInductiveGrid:
 
         Returns
         -------
-        u_pcc_abc : 3-tuple of floats
+        u_g_abc : 3-tuple of floats
             Phase voltage at the point of common coupling (PCC).
 
         """  
         # PCC voltage space vector in stationary coordinates
-        u_pcc_abc = complex2abc(self.u_pccs0)  # + noise + offset ...
-        return u_pcc_abc
+        u_g_abc = complex2abc(self.u_gs0)  # + noise + offset ...
+        return u_g_abc

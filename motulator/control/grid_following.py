@@ -142,7 +142,7 @@ class GridFollowingCtrl(Ctrl):
         # Measure the feedback signals
         i_c_abc = mdl.rl_model.meas_currents()
         u_dc = mdl.conv.meas_dc_voltage()
-        u_pcc_abc = mdl.rl_model.meas_pcc_voltage()
+        u_g_abc = mdl.rl_model.meas_pcc_voltage()
         
         # Define the active and reactive power references at the given time
         u_dc_ref = self.u_dc_ref(self.t)
@@ -158,13 +158,13 @@ class GridFollowingCtrl(Ctrl):
         i_c_ref = self.current_ref_calc.output(p_g_ref, q_g_ref)
                 
         # Use of PLL to bring ugq to zero
-        u_g_q, abs_u_g, w_pll, theta_pll = self.pll.output(u_pcc_abc)
+        u_g_q, abs_u_g, w_pll, theta_pll = self.pll.output(u_g_abc)
 
         #Transform the measured current in dq frame
         i_c = np.exp(-1j*theta_pll)*abc2complex(i_c_abc)
         
         # Calculation of PCC voltage in synchronous frame
-        u_pcc = np.exp(-1j*theta_pll)*abc2complex(u_pcc_abc)
+        u_g = np.exp(-1j*theta_pll)*abc2complex(u_g_abc)
         
         #Calculation of the modulus of current reference
         i_abs = np.abs(i_c_ref)
@@ -193,7 +193,7 @@ class GridFollowingCtrl(Ctrl):
                      u_c_ref = u_c_ref, u_c_ref_lim = u_c_ref_lim, i_c = i_c,
                      abs_u_g =abs_u_g, d_abc_ref = d_abc_ref, i_c_ref = i_c_ref,
                      u_dc=u_dc, t=self.t, p_g_ref=p_g_ref,
-                     u_dc_ref = u_dc_ref, q_g_ref=q_g_ref, u_pcc = u_pcc,
+                     u_dc_ref = u_dc_ref, q_g_ref=q_g_ref, u_g = u_g,
                      )
         self.save(data)
 

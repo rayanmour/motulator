@@ -293,10 +293,11 @@ def plot_grid(sim, t_range=None, base=None):
     # 3-phase quantities
     i_c_abc = complex2abc(mdl.i_gs).T
     u_g_abc = complex2abc(mdl.u_gs).T
+    e_g_abc = complex2abc(mdl.e_gs).T
     
     # Calculation of active and reactive powers
-    p_g = 1.5*np.asarray(np.real(ctrl.u_pcc*np.conj(ctrl.i_c)))
-    q_g = 1.5*np.asarray(np.imag(ctrl.u_pcc*np.conj(ctrl.i_c)))
+    p_g = 1.5*np.asarray(np.real(ctrl.u_g*np.conj(ctrl.i_c)))
+    q_g = 1.5*np.asarray(np.imag(ctrl.u_g*np.conj(ctrl.i_c)))
     p_g_ref = np.asarray(ctrl.p_g_ref)
     q_g_ref = np.asarray(ctrl.q_g_ref)
     
@@ -305,8 +306,8 @@ def plot_grid(sim, t_range=None, base=None):
 
     if sim.ctrl.on_v_dc==False:
         # Subplot 1: Grid voltage
-        ax1.plot(mdl.t, u_g_abc/base.u, linewidth=LW)
-        ax1.legend([r'$u_g^a$',r'$u_g^b$',r'$u_g^c$'],
+        ax1.plot(mdl.t, e_g_abc/base.u, linewidth=LW)
+        ax1.legend([r'$e_g^a$',r'$e_g^b$',r'$e_g^c$'],
                    prop={'size': FL}, loc= 'upper right')
         ax1.set_xlim(t_range)
         ax1.set_xticklabels([])
@@ -393,10 +394,10 @@ def plot_grid(sim, t_range=None, base=None):
     # Subplot 3: Converter voltage reference and grid voltage
     ax3.plot(ctrl.t,np.real(ctrl.u_c_ref_lim/base.u), 
             ctrl.t,np.imag(ctrl.u_c_ref_lim/base.u), linewidth=LW)
-    ax3.plot(ctrl.t,np.real(ctrl.u_pcc/base.u),'--',
-             ctrl.t,np.imag(ctrl.u_pcc/base.u),'--', 
+    ax3.plot(ctrl.t,np.real(ctrl.u_g/base.u),'--',
+             ctrl.t,np.imag(ctrl.u_g/base.u),'--', 
              linewidth=LW)
-    ax3.legend([r'$u_{c,ref}^d$', r'$u_{c,ref}^q$', r'$u_{pcc}^d$', r'$u_{pcc}^q$'], 
+    ax3.legend([r'$u_{c,ref}^d$', r'$u_{c,ref}^q$', r'$u_{g}^d$', r'$u_{g}^q$'], 
                 prop={'size': FS}, loc= 'upper right')
     ax3.set_xlim(t_range)
     
