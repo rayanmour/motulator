@@ -49,7 +49,7 @@ class PSCtrlPars:
     on_v_pcc: bool = 0 # put 1 to control PCC voltage. 0 if not.
     
     # Power synchronization loop control parameters
-    r_a: float = .2 # Damping resistance, in per units
+    R_a: float = 4.6 # Damping resistance, in Ohm
     k_scal: float = 3/2 # scaling ratio of the abc/dq transformation
     on_rf: bool = 1 # Boolean: 1 to activate reference-feedforward. 0 is regular PSC
     
@@ -100,11 +100,6 @@ class PSCtrl(Ctrl):
         self.u_g_N = pars.u_g_N
         self.w_g = pars.w_g
         self.f_sw = pars.f_sw
-        # Definition of the base values
-        self.S_base = pars.S_base
-        self.I_base = np.sqrt(2)*pars.S_base/(3*pars.u_g_N)
-        self.Z_base = pars.u_g_N/(self.I_base*np.sqrt(2))
-        self.L_base = self.Z_base/pars.w_g
         # Activation of reference feedforward action
         self.on_rf = pars.on_rf
         # Activation of the PCC voltage control option
@@ -298,13 +293,9 @@ class PowerSynch:
            Control parameters.
     
        """
-       # Definition of the base values
-       self.S_base = pars.S_base
-       self.I_base = np.sqrt(2)*pars.S_base/(3*pars.u_g_N)
-       self.Z_base = pars.u_g_N/(self.I_base*np.sqrt(2))
        # controller parameters
        self.T_s = pars.T_s
-       self.R_a = pars.r_a*self.Z_base
+       self.R_a = pars.R_a
        self.k_p_psc = pars.w_g*self.R_a/(pars.k_scal*pars.u_g_N*pars.u_g_N)
        # Initial states
        self.theta_p = 0
@@ -387,10 +378,9 @@ class CurrentCtrl:
        # Definition of the base values
        self.S_base = pars.S_base
        self.I_base = np.sqrt(2)*pars.S_base/(3*pars.u_g_N)
-       self.Z_base = pars.u_g_N/(self.I_base*np.sqrt(2))
        # controller parameters
        self.T_s = pars.T_s
-       self.R_a = pars.r_a*self.Z_base
+       self.R_a = pars.R_a
        self.L_f = pars.L_f
        self.w_0_cc = pars.w_0_cc
        self.K_cc = pars.K_cc
@@ -400,7 +390,6 @@ class CurrentCtrl:
        # activation/deactivation of PCC voltage control option
        self.on_v_pcc = pars.on_v_pcc
        # Calculated maximum current in A
-       self.I_base = np.sqrt(2)*pars.S_base/(3*pars.u_g_N)
        self.I_max = pars.i_max*pars.k_scal*np.sqrt(2)*self.I_base
        #initial states
        self.x_c_old =0j 

@@ -63,7 +63,7 @@ u_g_abs_var =  lambda t: np.sqrt(2/3)*400
 mdl.grid_model.u_g_abs = u_g_abs_var # grid voltage magnitude
 
 # Create the simulation object and simulate it
-sim = mt.Simulation(mdl, ctrl, pwm=True)
+sim = mt.Simulation(mdl, ctrl, pwm=False)
 sim.simulate(t_stop = .1)
 
 # Print the execution time

@@ -59,6 +59,7 @@ class GridCompleteModel:
 
         """
         x0 = [self.rl_model.i_gs0]
+
         return x0
 
     def set_initial_values(self, t0, x0):
@@ -73,13 +74,11 @@ class GridCompleteModel:
         """
         self.t0 = t0
         self.rl_model.i_gs0 = x0[0]
-        
-        # calculation of input voltage based on current and grid voltages            
-        u_cs0 = self.rl_model.input_voltages(x0[0], self.grid_model.voltages(t0))
-        
-        # update stored input and output voltages of the RL line
-        self.rl_model.u_gs0 = self.grid_model.voltages(t0)
-        self.rl_model.u_cs0 = u_cs0
+        # calculation of input and output voltages of the RL line
+        u_cs0 = self.conv.ac_voltage(self.conv.q, self.conv.u_dc0)
+        u_gs0 = self.grid_model.voltages(t0)
+        # update pcc voltage
+        self.rl_model.u_pccs0 = self.rl_model.pcc_voltages(x0[0], u_cs0, u_gs0)
 
     def f(self, t, x):
         """
@@ -137,7 +136,7 @@ class GridCompleteModel:
         self.data.u_gs = self.grid_model.voltages(self.data.t)
         self.data.theta = np.mod(self.data.t*self.grid_model.w_N, 2*np.pi)
         self.data.u_cs = self.conv.ac_voltage(self.data.q, self.conv.u_dc0)
-
+        self.data.u_pccs = self.rl_model.pcc_voltages(self.data.i_gs,self.data.u_cs,self.data.u_gs)
 
 
 # %%
@@ -205,13 +204,11 @@ class ACDCGridCompleteModel:
         self.rl_model.i_gs0 = x0[0]
         self.dc_model.u_dc0 = x0[1].real
         self.conv.u_dc0 = x0[1].real
-        
-        # calculation of input voltage based on current and grid voltages            
-        u_cs0 = self.rl_model.input_voltages(x0[0], self.grid_model.voltages(t0), self.grid_model.w_N)
-        
-        # update stored input and output voltages of the RL line
-        self.rl_model.u_gs0 = self.grid_model.voltages(t0)
-        self.rl_model.u_cs0 = u_cs0
+        # calculation of input and output voltages of the RL line
+        u_cs0 = self.conv.ac_voltage(self.conv.q, x0[1].real)
+        u_gs0 = self.grid_model.voltages(t0)
+        # update pcc voltage
+        self.rl_model.u_pccs0 = self.rl_model.pcc_voltages(x0[0], u_cs0, u_gs0)
 
     def f(self, t, x):
         """
@@ -240,7 +237,7 @@ class ACDCGridCompleteModel:
         # State derivatives
         rl_f = self.rl_model.f(i_gs, u_cs, u_gs)
         dc_f = self.dc_model.f(t, u_dc, i_g_abc, q)
-        # List of state derivatives 
+        # List of state derivatives
         return [rl_f, dc_f]
 
     def save(self, sol):
@@ -277,3 +274,4 @@ class ACDCGridCompleteModel:
         self.data.u_gs = self.grid_model.voltages(self.data.t)
         self.data.theta = np.mod(self.data.t*self.grid_model.w_N, 2*np.pi)
         self.data.u_cs = self.conv.ac_voltage(self.data.q, self.conv.u_dc0)
+        self.data.u_pccs = self.rl_model.pcc_voltages(self.data.i_gs,self.data.u_cs,self.data.u_gs)

@@ -14,71 +14,6 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 # %%
-class InductiveGrid:
-    """
-    Inductive grid model where one of the output voltage is controllable.
-
-    An inductive grid model is built using a simple inductance model where the
-    two output voltages are imposed and the current can be calculated using
-    dynamic equations.
-
-    Parameters
-    ----------
-    L_g : float
-        Grid inductance (in H)
-    R_g : float
-        Grid resistance (in Ohm)
-    u_cs : function
-        External voltage at the impedance outputs, `u_cs(t)`.
-
-    """
-    
-    def __init__(self, L_g=10e-3, R_g=0, u_cs=lambda t: 0j):
-        self.L_g = L_g
-        self.R_g = R_g
-        self.u_cs = u_cs
-        # Initial values
-        self.i_gs0 = 0j
-
-    
-    def f(self, t, i_gs, u_gs):
-        # pylint: disable=R0913
-        """
-        Compute the state derivatives.
-
-        Parameters
-        ----------
-        t: real
-            Time.
-        i_gs : complex
-            Line current.
-        u_gs : complex
-            Grid voltage.
-
-        Returns
-        -------
-        di_gs: complex
-            Time derivative of the state vector, igs (line current)
-
-        """
-        di_gs = (self.u_cs(t) - u_gs - self.R_g*i_gs)/self.L_g
-        return di_gs
-    
-    def meas_currents(self):
-        """
-        Measure the phase currents at the end of the sampling period.
-
-        Returns
-        -------
-        i_g_abc : 3-tuple of floats
-            Phase currents.
-
-        """
-        # Line current space vector in stationary coordinates
-        i_g_abc = complex2abc(self.i_gs0)  # + noise + offset ...
-        return i_g_abc
-
-# %%
 class InverterToInductiveGrid:
     """
     Inductive grid model with a connection made to the inverter outputs.
@@ -99,18 +34,51 @@ class InverterToInductiveGrid:
         Grid resistance (in Ohm)
 
     """
-    def __init__(self, U_gN=400*np.sqrt(2/3), w_N=2*np.pi*50, L_f = 6e-3, R_f=0, L_g=30e-3, R_g=0):
+    def __init__(self, U_gN=400*np.sqrt(2/3), L_f = 6e-3, R_f=0, L_g=0, R_g=0):
         self.L_f = L_f
         self.R_f = R_f
         self.L_g = L_g
         self.R_g = R_g
-        self.w_N = w_N
         # Storing the input and output voltages of the RL line
         self.u_cs0 = U_gN + 0j
         self.u_gs0 = U_gN + 0j
+        # Storing the PCC voltage value
+        self.u_pccs0 = U_gN + 0j
         # Initial values
         self.i_gs0 = 0j
 
+
+
+    def pcc_voltages(self, i_gs, u_cs, u_gs):
+        """
+        Compute the PCC voltage, located in between the filter and the line
+        impedances
+
+        Parameters
+        ----------
+        i_gs : complex
+            Line current (A).
+        u_cs : complex
+            Converter-side voltage (V).
+        u_gs : complex
+            Grid-side voltage (V).
+
+        Returns
+        -------
+        u_pccs : complex
+            Voltage at the point of common coupling (PCC).
+
+        """
+        # calculation of voltage-related term
+        v_tu = (self.L_g/(self.L_g+self.L_f))*u_cs + (self.L_f/(self.L_g+self.L_f))*u_gs
+        # calculation of current-related term
+        v_ti = ((self.R_g*self.L_f - self.R_f*self.L_g)/(self.L_g+self.L_f))*i_gs
+        
+        # PCC voltage in alpha-beta coordinates
+        u_pccs = v_tu + v_ti
+        
+        return u_pccs
+    
     
     def f(self, i_gs, u_cs, u_gs):
         # pylint: disable=R0913
@@ -122,9 +90,9 @@ class InverterToInductiveGrid:
         i_gs : complex
             Line current (A).
         u_cs : complex
-            Input voltage (V).
+            Converter-side voltage (V).
         u_gs : complex
-            Output voltage (V).
+            Grid-side voltage (V).
 
         Returns
         -------
@@ -139,32 +107,6 @@ class InverterToInductiveGrid:
         di_gs = (u_cs - u_gs - R_t*i_gs)/L_t
         
         return di_gs
-    
-    def input_voltages(self, i_gs, u_gs):
-        """
-        Compute the voltage at the input of the inductor based on the output
-        voltage value and the line current in the stationary frame.
-           
-        Parameters
-        ----------
-        i_gs : complex
-            Line current (A).
-        u_gs : complex
-            Output voltage (V).
-        w_g : float
-            Grid angular speed (in rad/s).
-
-        Returns
-        -------
-        u_cs : complex
-            Input voltage (V).
-
-        """
-        
-        # computation of input voltage
-        u_cs = u_gs + ((self.R_f + self.R_g) + 1j*self.w_N*(self.L_f + self.L_g))*i_gs
-        
-        return u_cs
 
     def meas_currents(self):
         """
@@ -183,7 +125,7 @@ class InverterToInductiveGrid:
     
     def meas_pcc_voltage(self):
         """
-        Measure the phase currents at the end of the sampling period.
+        Measure the PCC voltages at the end of the sampling period.
 
         Returns
         -------
@@ -192,12 +134,8 @@ class InverterToInductiveGrid:
 
         """
         
-        # calculation of complex impedances
-        Z_f = self.R_f + 1j*self.w_N*self.L_f
-        Z_g = self.R_g + 1j*self.w_N*self.L_g
-        
         # PCC voltage in alpha-beta coordinates
-        u_pccs = (Z_g /(Z_f + Z_g))*self.u_cs0 + (Z_f /(Z_f + Z_g))*self.u_gs0
+        u_pccs = self.pcc_voltages(self.i_gs0,self.u_cs0,self.u_gs0)
         
-        u_pcc_abc = complex2abc(u_pccs)  # + noise + offset ...
+        u_pcc_abc = complex2abc(self.u_pccs0)  # + noise + offset ...
         return u_pcc_abc

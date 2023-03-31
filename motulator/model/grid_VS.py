@@ -28,8 +28,8 @@ class Grid:
         nominal voltage peak value (phase to ground)
     w_g : float
         grid constant frequency
-    u_g_abs : function
-        3-phase grid voltage magnitude (rms)
+    e_g_abs : function
+        3-phase grid voltage magnitude
     """
     
     def __init__(self, w_N=2*np.pi*50,

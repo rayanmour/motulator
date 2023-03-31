@@ -56,7 +56,7 @@ pars = mt.PSCtrlPars(
         S_base=6.9e3,
         i_max = 1.5,
         w_0_cc = 2*np.pi*5,
-        r_a = .2)
+        R_a = .2*base_values.Z)
 ctrl = mt.PSCtrl(pars)
 
 # %%
@@ -69,7 +69,7 @@ u_g_abs_var =  lambda t: np.sqrt(2/3)*400
 mdl.grid_model.u_g_abs = u_g_abs_var # grid voltage magnitude
 
 # Create the simulation object and simulate it
-sim = mt.simulation.Simulation(mdl, ctrl, pwm=True)
+sim = mt.simulation.Simulation(mdl, ctrl, pwm=False)
 sim.simulate(t_stop = 1.5)
 
 # Print the execution time

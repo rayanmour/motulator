@@ -392,7 +392,7 @@ def plot_grid(sim, t_range=None, base=None):
 
     # Subplot 3: Converter voltage reference and grid voltage
     ax3.plot(ctrl.t,np.real(ctrl.u_c_ref_lim/base.u), 
-             ctrl.t,np.imag(ctrl.u_c_ref_lim/base.u), linewidth=LW)
+            ctrl.t,np.imag(ctrl.u_c_ref_lim/base.u), linewidth=LW)
     ax3.plot(ctrl.t,np.real(ctrl.u_pcc/base.u),'--',
              ctrl.t,np.imag(ctrl.u_pcc/base.u),'--', 
              linewidth=LW)

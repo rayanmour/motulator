@@ -108,16 +108,11 @@ class GridFollowingCtrl(Ctrl):
         self.r_i = pars.alpha_c*pars.L_f
         # Definition of the base values
         self.I_base = np.sqrt(2)*pars.S_base/(3*pars.u_gN)
-        self.Z_base = pars.u_gN/(self.I_base*np.sqrt(2))
-        self.L_base = self.Z_base/pars.w_g
-        self.C_base = 1/(pars.w_g*self.Z_base)
         # Calculated maximum current in A
         self.I_max = pars.i_max*pars.k_scal*np.sqrt(2)*self.I_base
         # Calculated PLL estimator gains
         self.k_p_pll = 2*pars.zeta*pars.w_0_pll/pars.u_gN
         self.k_i_pll = pars.w_0_pll*pars.w_0_pll/pars.u_gN
-        # Sampling time
-        self.T_s = pars.T_s
         # States
         self.u_c_i = 0j
         self.theta_p = 0
@@ -283,9 +278,9 @@ class PLL:
         u_g_ab = u_g_abc[0] - u_g_abc[1] # calculation of phase-to-phase voltages
         u_g_bc = u_g_abc[1] - u_g_abc[2] # calculation of phase-to-phase voltages
         
-        # Calculation of ug in complex form (stationary coordinates)
+        # Calculation of u_g in complex form (stationary coordinates)
         u_g_s = (2/3)*u_g_ab +(1/3)*u_g_bc + 1j*(np.sqrt(3)/(3))*u_g_bc
-        # And then in rotor coordinates:
+        # And then in general coordinates
         u_g = u_g_s*np.exp(-1j*self.theta_p)
         # Definition of the error using the q-axis voltage
         u_g_q = np.imag(u_g) 
