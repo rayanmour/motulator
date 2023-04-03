@@ -4,14 +4,10 @@ This module contains continuous-time models for first order dynamic model of
 an RL line.
 
 """
-from __future__ import annotations
 import numpy as np
+
 from motulator.helpers import complex2abc
 
-
-import os.path
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 # %%
 class InverterToInductiveGrid:
@@ -67,9 +63,11 @@ class InverterToInductiveGrid:
 
         """
         # calculation of voltage-related term
-        v_tu = (self.L_g/(self.L_g+self.L_f))*u_cs + (self.L_f/(self.L_g+self.L_f))*e_gs
+        v_tu = ((self.L_g/(self.L_g+self.L_f))*u_cs + 
+            (self.L_f/(self.L_g+self.L_f))*e_gs)
         # calculation of current-related term
-        v_ti = ((self.R_g*self.L_f - self.R_f*self.L_g)/(self.L_g+self.L_f))*i_gs
+        v_ti = (
+            ((self.R_g*self.L_f - self.R_f*self.L_g)/(self.L_g+self.L_f))*i_gs)
         
         # PCC voltage in alpha-beta coordinates
         u_gs = v_tu + v_ti

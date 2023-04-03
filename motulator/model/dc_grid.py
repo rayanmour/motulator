@@ -6,12 +6,7 @@ The dc grid model defined here is used if the dc bus is modelled as a current
 source and the capacitance dynamics need to be modeled.
 
 """
-from __future__ import annotations
-import numpy as np
-from motulator.helpers import (
-    complex2abc,
-    abc2complex
-    )
+from motulator.helpers import complex2abc
 
 # %%
 class DcGrid:
@@ -33,13 +28,14 @@ class DcGrid:
      """
     
     def __init__(self, C_dc=1e-3, G_dc=0, i_dc=lambda t: 0, u_dc0 = 650):
-         self.C_dc = C_dc
-         self.G_dc = G_dc
-         self.i_dc = i_dc
-         # Initial values
-         self.u_dc0 = u_dc0
+        self.C_dc = C_dc
+        self.G_dc = G_dc
+        self.i_dc = i_dc
+        # Initial values
+        self.u_dc0 = u_dc0
     
-    def dc_current(self, i_c_abc, q):
+    @staticmethod
+    def dc_current(i_c_abc, q):
         """
         Compute the DC-side converter current, used to model the DC-bus voltage
         dynamics.
@@ -66,7 +62,6 @@ class DcGrid:
         i_L = q_abc[0]*i_c_abc[0] + q_abc[1]*i_c_abc[1] + q_abc[2]*i_c_abc[2]
         
         return i_L
-    
     
     def f(self, t, u_dc, i_c_abc, q):
         # pylint: disable=R0913
@@ -102,7 +97,7 @@ class DcGrid:
 
     def meas_dc_voltage(self):
         """
-        Measure the DC voltage at the end of the sampling period
+        Measure the DC voltage at the end of the sampling period.
     
         Returns
         -------

@@ -1,19 +1,14 @@
 # pylint: disable=C0103
 """
-This module contains continuous-time models for grid models using a constant voltage approximation.
+This module contains continuous-time models for grid.
 
 """
-from __future__ import annotations
 import numpy as np
+
 from motulator.helpers import (
     complex2abc,
     abc2complex
     )
-
-import os.path
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
 
 # %%
 class Grid:

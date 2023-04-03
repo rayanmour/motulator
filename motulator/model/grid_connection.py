@@ -6,13 +6,10 @@ Peak-valued complex space vectors are used. The space vector models are
 implemented in stationary coordinates.
 
 """
-from __future__ import annotations
+
 import numpy as np
-from motulator.helpers import Bunch
-from motulator.helpers import (
-    complex2abc,
-    abc2complex
-    )
+
+from motulator.helpers import Bunch, complex2abc
 
 # %%
 class GridCompleteModel:
@@ -137,7 +134,8 @@ class GridCompleteModel:
         self.data.e_gs = self.grid_model.voltages(self.data.t)
         self.data.theta = np.mod(self.data.t*self.grid_model.w_N, 2*np.pi)
         self.data.u_cs = self.conv.ac_voltage(self.data.q, self.conv.u_dc0)
-        self.data.u_gs = self.rl_model.pcc_voltages(self.data.i_gs,self.data.u_cs,self.data.e_gs)
+        self.data.u_gs = self.rl_model.pcc_voltages(
+            self.data.i_gs,self.data.u_cs,self.data.e_gs)
 
 
 # %%
@@ -258,7 +256,8 @@ class ACDCGridCompleteModel:
         self.data.q.extend(sol.q)
         q_abc=complex2abc(np.asarray(sol.q))
         i_c_abc=complex2abc(sol.y[0])
-        self.data.i_L.extend(q_abc[0]*i_c_abc[0] + q_abc[1]*i_c_abc[1] + q_abc[2]*i_c_abc[2])
+        self.data.i_L.extend(q_abc[0]*i_c_abc[0] +
+                             q_abc[1]*i_c_abc[1] + q_abc[2]*i_c_abc[2])
                                     
     def post_process(self):
         """
@@ -276,4 +275,5 @@ class ACDCGridCompleteModel:
         self.data.e_gs = self.grid_model.voltages(self.data.t)
         self.data.theta = np.mod(self.data.t*self.grid_model.w_N, 2*np.pi)
         self.data.u_cs = self.conv.ac_voltage(self.data.q, self.conv.u_dc0)
-        self.data.u_gs = self.rl_model.pcc_voltages(self.data.i_gs,self.data.u_cs,self.data.e_gs)
+        self.data.u_gs = self.rl_model.pcc_voltages(
+            self.data.i_gs,self.data.u_cs,self.data.e_gs)
