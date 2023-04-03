@@ -22,9 +22,10 @@ from motulator.control.common import Ctrl, PWM
 @dataclass
 class PSCtrlPars:
     """
-    grid-forming control parameters.
+    power synchronization control(PSC-)based parameters.
 
     """
+    # pylint: disable=too-many-instance-attributes
     # General control parameters
     p_g_ref: Callable[[float], float] = field(
         repr=False, default=lambda t: (t > .2)*(5e3)) # active power reference
@@ -85,7 +86,7 @@ class PSCtrl(Ctrl):
 
     """
 
-    # pylint: disable=too-many-instance-attributes
+    # pylint: disable=too-many-instance-attributes, too-few-public-methods
     def __init__(self, pars):
         super().__init__()
         self.t = 0
@@ -165,9 +166,9 @@ class PSCtrl(Ctrl):
         
         # Calculation of active and reactive powers:
         if self.on_u_g:
-            p_calc, q_calc = self.power_calc.output(i_c, u_g)
+            p_calc, __ = self.power_calc.output(i_c, u_g)
         else:   
-            p_calc, q_calc = self.power_calc.output(i_c, self.u_c_ref_lim)
+            p_calc, __ = self.power_calc.output(i_c, self.u_c_ref_lim)
         
         # Synchronization through active power variations
         w_c, theta_c = self.power_synch.output(p_calc, p_g_ref, w_c_ref)
@@ -220,15 +221,15 @@ class PowerCalc:
     """
     
     def __init__(self, pars):
-        
-       """
-       Parameters
-       ----------
-       pars : PSCtrlPars
-           Control parameters.
+         
+        """
+        Parameters
+        ----------
+        pars : PSCtrlPars
+            Control parameters.
     
-       """
-       self.k_scal = pars.k_scal
+        """
+        self.k_scal = pars.k_scal
 
     
     def output(self, i_c, u_c):
@@ -274,20 +275,20 @@ class PowerSynch:
         
         
     def __init__(self, pars):
-        
-       """
-       Parameters
-       ----------
-       pars : PSCtrlPars
+         
+        """
+        Parameters
+        ----------
+        pars : PSCtrlPars
            Control parameters.
-    
-       """
-       # controller parameters
-       self.T_s = pars.T_s
-       self.R_a = pars.R_a
-       self.k_p_psc = pars.w_g*self.R_a/(pars.k_scal*pars.u_g_N*pars.u_g_N)
-       # Initial states
-       self.theta_p = 0
+     
+        """
+        # controller parameters
+        self.T_s = pars.T_s
+        self.R_a = pars.R_a
+        self.k_p_psc = pars.w_g*self.R_a/(pars.k_scal*pars.u_g_N*pars.u_g_N)
+        # Initial states
+        self.theta_p = 0
     
             
     def output(self, p_calc, p_g_ref, w_c_ref):
@@ -356,32 +357,32 @@ class CurrentCtrl:
         
         
     def __init__(self, pars):
-        
-       """
-       Parameters
-       ----------
-       pars : PSCtrlPars
-           Control parameters.
+         
+        """
+        Parameters
+        ----------
+        pars : PSCtrlPars
+            Control parameters.
     
-       """
-       # Definition of the base values
-       self.S_base = pars.S_base
-       self.I_base = np.sqrt(2)*pars.S_base/(3*pars.u_g_N)
-       # controller parameters
-       self.T_s = pars.T_s
-       self.R_a = pars.R_a
-       self.L_f = pars.L_f
-       self.w_0_cc = pars.w_0_cc
-       self.K_cc = pars.K_cc
-       self.k_scal= pars.k_scal
-       # activation/deactivation of reference feedforward action
-       self.on_rf = pars.on_rf
-       # activation/deactivation of PCC voltage control option
-       self.on_u_g = pars.on_u_g
-       # Calculated maximum current in A
-       self.I_max = pars.i_max*pars.k_scal*np.sqrt(2)*self.I_base
-       #initial states
-       self.x_c_old =0j 
+        """
+        # Definition of the base values
+        self.S_base = pars.S_base
+        self.I_base = np.sqrt(2)*pars.S_base/(3*pars.u_g_N)
+        # controller parameters
+        self.T_s = pars.T_s
+        self.R_a = pars.R_a
+        self.L_f = pars.L_f
+        self.w_0_cc = pars.w_0_cc
+        self.K_cc = pars.K_cc
+        self.k_scal= pars.k_scal
+        # activation/deactivation of reference feedforward action
+        self.on_rf = pars.on_rf
+        # activation/deactivation of PCC voltage control option
+        self.on_u_g = pars.on_u_g
+        # Calculated maximum current in A
+        self.I_max = pars.i_max*pars.k_scal*np.sqrt(2)*self.I_base
+        #initial states
+        self.x_c_old =0j 
     
             
     def output(self, i_c, p_g_ref, v_ref, w_c_ref):
@@ -427,7 +428,7 @@ class CurrentCtrl:
         i_c_q_ref = np.imag(i_c_ref)
     
         # And current limitation algorithm
-        if (i_abs > 0):
+        if i_abs > 0:
             i_ratio = self.I_max/i_abs
             i_c_d_ref = np.sign(i_c_d_ref)*np.min([i_ratio*np.abs(i_c_d_ref),np.abs(i_c_d_ref)])
             i_c_q_ref = np.sign(i_c_q_ref)*np.min([i_ratio*np.abs(i_c_q_ref),np.abs(i_c_q_ref)])
@@ -469,23 +470,23 @@ class DCVoltageControl:
     """
     
     def __init__(self, pars):
-        
-       """
-       Parameters
-       ----------
-       pars : GridFollowingCtrlPars
-           Control parameters.
+         
+        """
+        Parameters
+        ----------
+        pars : GridFollowingCtrlPars
+            Control parameters.
     
-       """
-       self.T_s = pars.T_s
-       self.w_0_dc = pars.w_0_dc
-       self.zeta_dc = pars.zeta_dc
-       self.k_p_dc = 2*pars.zeta_dc*pars.w_0_dc
-       self.k_i_dc = pars.w_0_dc*pars.w_0_dc
-       self.C_dc = pars.C_dc
-       # Saturation of power reference
-       self.p_max = pars.p_max
-       self.p_g_i = 0 # integrator state of the controller
+        """
+        self.T_s = pars.T_s
+        self.w_0_dc = pars.w_0_dc
+        self.zeta_dc = pars.zeta_dc
+        self.k_p_dc = 2*pars.zeta_dc*pars.w_0_dc
+        self.k_i_dc = pars.w_0_dc*pars.w_0_dc
+        self.C_dc = pars.C_dc
+        # Saturation of power reference
+        self.p_max = pars.p_max
+        self.p_g_i = 0 # integrator state of the controller
     
     def output(self, u_dc_ref, u_dc):
         
@@ -521,9 +522,9 @@ class DCVoltageControl:
         
         # Limit the output reference
         p_dc_ref_lim = p_dc_ref
-        if(p_dc_ref_lim > self.p_max):
+        if p_dc_ref_lim > self.p_max:
             p_dc_ref_lim = self.p_max
-        elif(p_dc_ref_lim < -self.p_max):
+        elif p_dc_ref_lim < -self.p_max:
             p_dc_ref_lim = -self.p_max
            
         
@@ -531,6 +532,19 @@ class DCVoltageControl:
     
         
     def update(self, err_dc, p_dc_ref, p_dc_ref_lim):
-             
+        """
+        Update the state of the DC-voltage controller with anti-windup.
+
+        Parameters
+        ----------
+        err_dc: float
+            DC capacitance energy error signal
+        p_dc_ref: float
+            power reference based on DC voltage controller
+        p_dc_ref_lim: float
+            saturated power reference based on DC voltage controller
+        
+        """
         # Update the integrator state (the last term is antiwindup)
-        self.p_g_i = self.p_g_i + self.T_s*self.k_i_dc*(err_dc + (p_dc_ref_lim - p_dc_ref)/self.k_p_dc) 
+        self.p_g_i = (self.p_g_i + self.T_s*self.k_i_dc*(err_dc +
+            (p_dc_ref_lim - p_dc_ref)/self.k_p_dc))
