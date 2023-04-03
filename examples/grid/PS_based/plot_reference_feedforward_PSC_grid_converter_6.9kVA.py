@@ -62,7 +62,8 @@ ctrl = mt.PSCtrl(pars)
 # %%
 
 # Set the active power reference
-ctrl.p_g_ref = lambda t: (t > .2)*(2.3e3) + (t > .5)*(2.3e3) + (t > .8)*(2.3e3) - (t > 1.2)*(6.9e3)
+ctrl.p_g_ref = lambda t: ((t > .2)*(2.3e3) + (t > .5)*(2.3e3) + 
+    (t > .8)*(2.3e3) - (t > 1.2)*(6.9e3))
 
 # AC-voltage magnitude (to simulate voltage dips or short-circuits)
 e_g_abs_var =  lambda t: np.sqrt(2/3)*400
