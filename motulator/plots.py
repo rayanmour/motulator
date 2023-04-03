@@ -331,7 +331,7 @@ def plot_grid(sim, t_range=None, base=None):
     
     # Subplot 3: Phase angles
     ax3.plot(mdl.t, mdl.theta, linewidth=LW)
-    ax3.plot(ctrl.t, ctrl.theta_pll, '--', linewidth=LW)
+    ax3.plot(ctrl.t, ctrl.theta_c, '--', linewidth=LW)
     ax3.legend([r'$\theta_{g}$',r'$\theta_{c}$']
                ,prop={'size': FL}, loc= 'upper right')
     ax3.set_xlim(t_range)

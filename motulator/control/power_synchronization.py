@@ -181,7 +181,7 @@ class PSCtrl(Ctrl):
 
         # Data logging
         data = Bunch(
-            w_c = w_c, theta_pll = self.theta_psc, v_ref = v_ref, w_c_ref = w_c_ref,
+            w_c = w_c, theta_c = self.theta_psc, v_ref = v_ref, w_c_ref = w_c_ref,
                      u_c_ref = u_c_ref, u_c_ref_lim = u_c_ref_lim, i_c = i_c,
                      d_abc_ref = d_abc_ref, i_c_ref = i_c_ref,
                      u_dc=u_dc, t=self.t, p_g_ref=p_g_ref, u_dc_ref = u_dc_ref,

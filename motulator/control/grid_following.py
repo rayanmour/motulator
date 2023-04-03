@@ -156,15 +156,15 @@ class GridFollowingCtrl(Ctrl):
       
         # Generate the current references
         i_c_ref = self.current_ref_calc.output(p_g_ref, q_g_ref)
+        
+        #Transform the measured current in dq frame
+        i_c = np.exp(-1j*self.theta_p)*abc2complex(i_c_abc)
+        
+        # Calculation of PCC voltage in synchronous frame
+        u_g = np.exp(-1j*self.theta_p)*abc2complex(u_g_abc)
                 
         # Use of PLL to bring ugq to zero
         u_g_q, abs_u_g, w_pll, theta_pll = self.pll.output(u_g_abc)
-
-        #Transform the measured current in dq frame
-        i_c = np.exp(-1j*theta_pll)*abc2complex(i_c_abc)
-        
-        # Calculation of PCC voltage in synchronous frame
-        u_g = np.exp(-1j*theta_pll)*abc2complex(u_g_abc)
         
         #Calculation of the modulus of current reference
         i_abs = np.abs(i_c_ref)
@@ -185,11 +185,11 @@ class GridFollowingCtrl(Ctrl):
         # Use the function from control commons:
         # d_abc_ref = self.pwm(uc_ref, udc, self.theta_p, self.wg)
         d_abc_ref, u_c_ref_lim = self.pwm.output(u_c_ref, u_dc,
-                                           theta_pll, self.w_g)
+                                           self.theta_p, self.w_g)
 
         # Data logging
         data = Bunch(
-            err_i = err_i, w_pll = w_pll, theta_pll = theta_pll,
+            err_i = err_i, w_c = w_pll, theta_c = theta_pll,
                      u_c_ref = u_c_ref, u_c_ref_lim = u_c_ref_lim, i_c = i_c,
                      abs_u_g =abs_u_g, d_abc_ref = d_abc_ref, i_c_ref = i_c_ref,
                      u_dc=u_dc, t=self.t, p_g_ref=p_g_ref,
@@ -271,6 +271,8 @@ class PLL:
             Error signal (in V, corresponds to the q-axis grid voltage).
         abs_u_g : float
             magnitude of the grid voltage vector (in V).
+        w_g_pll : float
+            estimated grid frequency (in rad/s).
         theta_pll : float
             estimated phase angle (in rad).
         """
