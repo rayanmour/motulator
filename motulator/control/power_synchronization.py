@@ -6,7 +6,8 @@ This control scheme is based on the updated version presented in [1]. More info
 can be found in this reference.
 
 [1] Reference-feedforward power-synchronization control, L Harnefors,
-FMM Rahman, M Hinkkanen, M Routimo - IEEE Transactions on Power Electronics, 2020
+FMM Rahman, M Hinkkanen, M Routimo - IEEE Transactions on Power Electronics,
+2020.
 
 '''
 # %%
@@ -34,7 +35,7 @@ class PSCtrlPars:
     w_c_ref: Callable[[float], float] = field(
         repr=False, default=lambda t: 2*np.pi*50) # frequency reference
     v_ref: Callable[[float], float] = field(
-        repr=False, default=lambda t: np.sqrt(2/3)*400) # voltage magnitude reference
+        repr=False, default=lambda t: np.sqrt(2/3)*400) # voltage magnitude ref
     u_dc_ref: Callable[[float], float] = field(
         repr=False, default=lambda t: 650) # DC voltage reference, only used if
                                     # the dc voltage control mode is activated.
@@ -52,7 +53,7 @@ class PSCtrlPars:
     # Power synchronization loop control parameters
     R_a: float = 4.6 # Damping resistance, in Ohm
     k_scal: float = 3/2 # scaling ratio of the abc/dq transformation
-    on_rf: bool = 1 # Boolean: 1 to activate reference-feedforward. 0 is regular PSC
+    on_rf: bool = 1 # Boolean: 1 to activate reference-feedforward. 0 is PSC
     
     # Low pass filter for the current controller of PSC
     w_0_cc: float = 2*np.pi*50 # filter undamped natural frequency, in rad/s.
@@ -150,7 +151,9 @@ class PSCtrl(Ctrl):
         # Define the active and reactive power references at the given time
         u_dc_ref = self.u_dc_ref(self.t)
         if self.on_v_dc:
-            e_dc, p_dc_ref, p_dc_ref_lim = self.dc_voltage_control.output(u_dc_ref,u_dc)
+            e_dc, p_dc_ref, p_dc_ref_lim =self.dc_voltage_control.output(
+                u_dc_ref,
+                u_dc)
             p_g_ref = p_dc_ref_lim
             q_g_ref = self.q_g_ref(self.t)
         else:
@@ -174,7 +177,7 @@ class PSCtrl(Ctrl):
         w_c, theta_c = self.power_synch.output(p_calc, p_g_ref, w_c_ref)
 
         # Voltage reference in synchronous coordinates
-        u_c_ref, i_c_ref = self.current_ctrl.output(i_c, p_g_ref, v_ref, w_c_ref)
+        u_c_ref, i_c_ref = self.current_ctrl.output(i_c,p_g_ref,v_ref,w_c_ref)
         
         # Compute the PWM
         d_abc_ref, u_c_ref_lim = self.pwm.output(u_c_ref, u_dc,
@@ -182,11 +185,11 @@ class PSCtrl(Ctrl):
 
         # Data logging
         data = Bunch(
-            w_c = w_c, theta_c = self.theta_psc, v_ref = v_ref, w_c_ref = w_c_ref,
-                     u_c_ref = u_c_ref, u_c_ref_lim = u_c_ref_lim, i_c = i_c,
-                     d_abc_ref = d_abc_ref, i_c_ref = i_c_ref,
-                     u_dc=u_dc, t=self.t, p_g_ref=p_g_ref, u_dc_ref = u_dc_ref,
-                     q_g_ref=q_g_ref, u_g = u_g
+            w_c = w_c, theta_c = self.theta_psc, v_ref = v_ref,
+            w_c_ref = w_c_ref, u_c_ref = u_c_ref, u_c_ref_lim = u_c_ref_lim,
+            i_c = i_c, d_abc_ref = d_abc_ref, i_c_ref = i_c_ref,
+            u_dc = u_dc, t = self.t, p_g_ref = p_g_ref, u_dc_ref = u_dc_ref,
+            q_g_ref = q_g_ref, u_g = u_g
                      )
         self.save(data)
 
@@ -285,8 +288,7 @@ class PowerSynch:
         """
         # controller parameters
         self.T_s = pars.T_s
-        self.R_a = pars.R_a
-        self.k_p_psc = pars.w_g*self.R_a/(pars.k_scal*pars.u_g_N*pars.u_g_N)
+        self.k_p_psc = pars.w_g*pars.R_a/(pars.k_scal*pars.u_g_N*pars.u_g_N)
         # Initial states
         self.theta_p = 0
     
@@ -411,7 +413,8 @@ class CurrentCtrl:
         """
 
         # Low pass filter for the current:
-        i_c_filt = (1-self.T_s*self.w_0_cc)*self.x_c_old + self.K_cc*(self.T_s*self.w_0_cc)*i_c
+        i_c_filt = ((1-self.T_s*self.w_0_cc)*self.x_c_old +
+            self.K_cc*(self.T_s*self.w_0_cc)*i_c)
         
         # Definition of the voltage reference in complex form
         v_c_ref = v_ref + 1j*0
@@ -430,13 +433,16 @@ class CurrentCtrl:
         # And current limitation algorithm
         if i_abs > 0:
             i_ratio = self.I_max/i_abs
-            i_c_d_ref = np.sign(i_c_d_ref)*np.min([i_ratio*np.abs(i_c_d_ref),np.abs(i_c_d_ref)])
-            i_c_q_ref = np.sign(i_c_q_ref)*np.min([i_ratio*np.abs(i_c_q_ref),np.abs(i_c_q_ref)])
+            i_c_d_ref = np.sign(i_c_d_ref)*np.min(
+                [i_ratio*np.abs(i_c_d_ref),np.abs(i_c_d_ref)])
+            i_c_q_ref = np.sign(i_c_q_ref)*np.min(
+                [i_ratio*np.abs(i_c_q_ref),np.abs(i_c_q_ref)])
             i_c_ref = i_c_d_ref + 1j*i_c_q_ref
         
                 
         # Calculation of converter voltage output (reference sent to PWM)
-        u_c_ref = v_c_ref + self.R_a*(i_c_ref - i_c) + self.on_u_g*1j*self.L_f*w_c_ref*i_c
+        u_c_ref = (v_c_ref + self.R_a*(i_c_ref - i_c) +
+           self.on_u_g*1j*self.L_f*w_c_ref*i_c)
         
         
         return u_c_ref, i_c_ref
@@ -454,8 +460,10 @@ class CurrentCtrl:
         """
 
         # Update the current low pass filer integrator
-        re_i = (1-self.T_s*self.w_0_cc)*np.real(self.x_c_old) + self.K_cc*(self.T_s*self.w_0_cc)*np.real(i_c)
-        im_i = ((1-self.T_s*self.w_0_cc)*np.imag(self.x_c_old) + self.K_cc*(self.T_s*self.w_0_cc)*np.imag(i_c))
+        re_i = ((1-self.T_s*self.w_0_cc)*np.real(self.x_c_old) +
+            self.K_cc*(self.T_s*self.w_0_cc)*np.real(i_c))
+        im_i = ((1-self.T_s*self.w_0_cc)*np.imag(self.x_c_old) +
+            self.K_cc*(self.T_s*self.w_0_cc)*np.imag(i_c))
         self.x_c_old = re_i + 1j*im_i
 
 # %%        

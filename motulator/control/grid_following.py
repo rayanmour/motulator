@@ -142,7 +142,9 @@ class GridFollowingCtrl(Ctrl):
         # Define the active and reactive power references at the given time
         u_dc_ref = self.u_dc_ref(self.t)
         if self.on_v_dc:
-            e_dc, p_dc_ref, p_dc_ref_lim = self.dc_voltage_control.output(u_dc_ref,u_dc)
+            e_dc, p_dc_ref, p_dc_ref_lim =self.dc_voltage_control.output(
+                u_dc_ref,
+                u_dc)
             p_g_ref = p_dc_ref_lim
             q_g_ref = self.q_g_ref(self.t)
         else:
