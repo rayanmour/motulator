@@ -44,9 +44,6 @@ class PSCtrlPars:
     w_g: float = 2*np.pi*50 # grid frequency, in Hz
     f_sw: float = 8e3 # switching frequency, in Hz.
     
-    # Rating of the converter
-    S_base: float = 10e3 # in VA
-    
     # Control of the converter voltage or the PCC voltage
     on_u_g: bool = 0 # put 1 to control PCC voltage. 0 if not.
     
@@ -56,9 +53,9 @@ class PSCtrlPars:
     on_rf: bool = 1 # Boolean: 1 to activate reference-feedforward. 0 is PSC
     
     # Low pass filter for the current controller of PSC
-    w_0_cc: float = 2*np.pi*50 # filter undamped natural frequency, in rad/s.
+    w_0_cc: float = 2*np.pi*5 # filter undamped natural frequency, in rad/s.
     K_cc: float = 1 # low pass filter gain
-    i_max: float = 1.5 # maximum current modulus in per units
+    I_max: float = 20 # maximum current modulus in A
     
     # DC-voltage controller
     on_v_dc: bool = 0 # put 1 to activate dc voltage controller. 0 is p-mode
@@ -367,9 +364,6 @@ class CurrentCtrl:
             Control parameters.
     
         """
-        # Definition of the base values
-        self.S_base = pars.S_base
-        self.I_base = np.sqrt(2)*pars.S_base/(3*pars.u_g_N)
         # controller parameters
         self.T_s = pars.T_s
         self.R_a = pars.R_a
@@ -382,7 +376,7 @@ class CurrentCtrl:
         # activation/deactivation of PCC voltage control option
         self.on_u_g = pars.on_u_g
         # Calculated maximum current in A
-        self.I_max = pars.i_max*pars.k_scal*np.sqrt(2)*self.I_base
+        self.I_max = pars.I_max
         #initial states
         self.x_c_old =0j 
     

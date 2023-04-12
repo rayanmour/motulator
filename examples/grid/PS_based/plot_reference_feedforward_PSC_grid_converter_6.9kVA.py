@@ -51,10 +51,11 @@ else:
 pars = mt.PSCtrlPars(
         L_f=6e-3,
         R_f=0,
+        f_sw = 4e3,
+        T_s = 1/(8e3),
         on_rf=True,
         on_v_dc=False,
-        S_base=6.9e3,
-        i_max = 1.5,
+        I_max = 1.5*(3/2)*base_values.i,
         w_0_cc = 2*np.pi*5,
         R_a = .2*base_values.Z)
 ctrl = mt.PSCtrl(pars)
@@ -78,4 +79,4 @@ print('\nExecution time: {:.2f} s'.format((time.time() - start_time)))
 
 # Plot results in per unit values
 #mt.plot_grid(sim)
-mt.plot_grid(sim, base=base_values)
+mt.plot_grid(sim, base=base_values, plot_pcc_voltage=True)

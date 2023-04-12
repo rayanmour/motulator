@@ -38,9 +38,8 @@ class GridFollowingCtrlPars:
     w_g: float = 2*np.pi*50 # grid frequency, in Hz
     f_sw: float = 8e3 # switching frequency, in Hz.
     
-    # Rating of the converter
-    S_base: float = 10e3 # in VA
-    k_scal: float = 3/2 # scaling ratio of the abc/dq transformation
+    # Scaling ratio of the abc/dq transformation
+    k_scal: float = 3/2 
     
     # Current controller parameters
     alpha_c: float = 2*np.pi*400 # current controller bandwidth.
@@ -49,6 +48,10 @@ class GridFollowingCtrlPars:
     w_0_pll: float = 2*np.pi*20 # undamped natural frequency
     zeta: float = 1 # damping ratio
     
+    # Low pass filter for voltage feedforward term
+    w_0_ff: float = 2*np.pi*(4*50) # low pass filter bandwidth
+    K_ff: float = 1 # low pass filter gain
+    
     # DC-voltage controller
     on_v_dc: bool = 0 # put 1 to activate dc voltage controller. 0 is p-mode
     zeta_dc: float = 1 # damping ratio
@@ -56,7 +59,7 @@ class GridFollowingCtrlPars:
     w_0_dc: float = 2*np.pi*30 # controller undamped natural frequency, in rad/s.
     
     # Current limitation
-    i_max: float = 1.5 # maximum current modulus in per units
+    I_max: float = 20 # maximum current modulus in A
     
     # Passive component parameter estimates
     L_f: float = 10e-3 # filter inductance, in H.
@@ -101,20 +104,22 @@ class GridFollowingCtrl(Ctrl):
         # DC voltage reference
         self.u_dc_ref = pars.u_dc_ref
         # Calculated current controller gains:
-        self.k_p_i = pars.alpha_c*pars.L_f-pars.R_f
+        self.k_p_i = pars.alpha_c*pars.L_f
         self.k_i_i = np.power(pars.alpha_c,2)*pars.L_f
         self.r_i = pars.alpha_c*pars.L_f
-        # Definition of the base values
-        self.I_base = np.sqrt(2)*pars.S_base/(3*pars.u_gN)
         # Calculated maximum current in A
-        self.I_max = pars.i_max*pars.k_scal*np.sqrt(2)*self.I_base
+        self.I_max = pars.I_max
         # Calculated PLL estimator gains
         self.k_p_pll = 2*pars.zeta*pars.w_0_pll/pars.u_gN
         self.k_i_pll = pars.w_0_pll*pars.w_0_pll/pars.u_gN
+        # Low pass filter for voltage feedforward term
+        self.w_0_ff = pars.w_0_ff
+        self.K_ff = pars.K_ff
         # States
         self.u_c_i = 0j
         self.theta_p = 0
         self.u_c_ref_lim = pars.u_gN + 1j*0
+        self.x_g_old = pars.u_gN + 1j*0
  
     def __call__(self, mdl):
         """
@@ -171,14 +176,24 @@ class GridFollowingCtrl(Ctrl):
         #And current limitation algorithm
         if i_abs > 0:
             i_ratio = self.I_max/i_abs
-            i_c_d_ref = np.sign(i_c_d_ref)*np.min([i_ratio*np.abs(i_c_d_ref),np.abs(i_c_d_ref)])
-            i_c_q_ref = np.sign(i_c_q_ref)*np.min([i_ratio*np.abs(i_c_q_ref),np.abs(i_c_q_ref)])
+            i_c_d_ref = np.sign(i_c_d_ref)*np.min([
+                i_ratio*np.abs(i_c_d_ref),
+                np.abs(i_c_d_ref)])
+            i_c_q_ref = np.sign(i_c_q_ref)*np.min([
+                i_ratio*np.abs(i_c_q_ref),
+                np.abs(i_c_q_ref)])
             i_c_ref = i_c_d_ref + 1j*i_c_q_ref
+        
+        
+        # Low pass filter for the feedforward PCC voltage:
+        u_g_filt = ((1-self.T_s*self.w_0_ff)*self.x_g_old +
+            self.K_ff*(self.T_s*self.w_0_ff)*u_g)
+        
         
         # Voltage reference in synchronous coordinates
         err_i = i_c_ref - i_c # current controller error signal
         u_c_ref = (self.k_p_i*err_i + self.u_c_i - self.r_i*i_c -
-            self.R_f*i_c + 1j*self.w_g*self.L_f*i_c + abs_u_g)
+            self.R_f*i_c + 1j*self.w_g*self.L_f*i_c + u_g_filt)
              
         # Use the function from control commons:
         # d_abc_ref = self.pwm(uc_ref, udc, self.theta_p, self.wg)
@@ -198,12 +213,19 @@ class GridFollowingCtrl(Ctrl):
         # Update the states
         self.theta_p = theta_pll
         self.u_c_ref_lim = u_c_ref_lim
-        self.u_c_i = self.u_c_i + self.T_s*self.k_i_i*(err_i + (u_c_ref_lim - u_c_ref)/self.k_p_i)
+        self.u_c_i = self.u_c_i + self.T_s*self.k_i_i*(
+            err_i + (u_c_ref_lim - u_c_ref)/self.k_p_i)
         self.update_clock(self.T_s)
         self.pwm.update(u_c_ref_lim)
         self.pll.update(u_g_q)
         if self.on_v_dc == 1:
             self.dc_voltage_control.update(e_dc, p_dc_ref, p_dc_ref_lim)
+        # Update the low pass filer integrator for feedforward action
+        re_u = ((1-self.T_s*self.w_0_ff)*np.real(self.x_g_old) +
+            self.K_ff*(self.T_s*self.w_0_ff)*np.real(u_g))
+        im_u = ((1-self.T_s*self.w_0_ff)*np.imag(self.x_g_old) +
+            self.K_ff*(self.T_s*self.w_0_ff)*np.imag(u_g))
+        self.x_g_old = re_u + 1j*im_u
 
         return self.T_s, d_abc_ref
     
