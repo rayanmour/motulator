@@ -57,7 +57,7 @@ ctrl = mt.GridFollowingCtrl(pars)
 # Set the active and reactive power references
 # that are inputs to the control system
 ctrl.p_g_ref = lambda t: (t > .02)*(5e3)
-ctrl.q_g_ref = lambda t: (t > .04)*(2e3)
+ctrl.q_g_ref = lambda t: (t > .04)*(4e3)
 
 # AC-voltage magnitude (to simulate voltage dips or short-circuits)
 e_g_abs_var =  lambda t: np.sqrt(2/3)*400
