@@ -298,6 +298,9 @@ def plot_grid(sim, t_range=None, base=None, plot_pcc_voltage=False):
     u_g_abc = complex2abc(mdl.u_gs).T
     e_g_abc = complex2abc(mdl.e_gs).T
     
+    # grid voltage magnitude
+    abs_e_g = np.abs(mdl.e_gs)
+    
     # Calculation of active and reactive powers
     # p_g = 1.5*np.asarray(np.real(ctrl.u_g*np.conj(ctrl.i_c)))
     # q_g = 1.5*np.asarray(np.imag(ctrl.u_g*np.conj(ctrl.i_c)))
@@ -407,10 +410,9 @@ def plot_grid(sim, t_range=None, base=None, plot_pcc_voltage=False):
     # Subplot 3: Converter voltage reference and grid voltage
     ax3.plot(ctrl.t,np.real(ctrl.u_c_ref_lim/base.u), 
             ctrl.t,np.imag(ctrl.u_c_ref_lim/base.u), linewidth=LW)
-    ax3.plot(ctrl.t,np.real(ctrl.u_g/base.u),'--',
-             ctrl.t,np.imag(ctrl.u_g/base.u),'--', 
+    ax3.plot(mdl.t,np.real(abs_e_g/base.u),'k--', 
              linewidth=LW)
-    ax3.legend([r'$u_{c,ref}^d$', r'$u_{c,ref}^q$', r'$u_{g}^d$', r'$u_{g}^q$'], 
+    ax3.legend([r'$u_{c,ref}^d$', r'$u_{c,ref}^q$', r'$|e_{g}|$'], 
                 prop={'size': FS}, loc= 'upper right')
     ax3.set_xlim(t_range)
     
