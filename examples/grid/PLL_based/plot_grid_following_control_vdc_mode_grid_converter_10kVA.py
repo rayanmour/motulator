@@ -27,8 +27,8 @@ base_values = mt.BaseValuesElectrical(
 
 # %%
 # Configure the system model (grid model)
-rl_model = mt.InverterToInductiveGrid(L_g=10e-3, R_g=0)
-grid_model = mt.Grid(U_gN=np.sqrt(2/3)*400, w_g=2*np.pi*50)
+rl_model = mt.InverterToInductiveGrid(L_f = 10e-3, L_g=0, R_g=0)
+grid_model = mt.Grid(w_N=2*np.pi*50)
 dc_model = mt.DcGrid(C_dc = 1e-3, u_dc0=600, G_dc=0)
 conv = mt.Inverter(u_dc=600)
 """
@@ -51,34 +51,32 @@ pars = mt.GridFollowingCtrlPars(
             L_f=10e-3,
             R_f=0,
             C_dc = 1e-3,
+            f_sw = 8e3,
+            T_s = 1/(16e3),
             on_v_dc=True,
-            S_base = 10e3,
-            i_max = 1.5,
+            I_max = 1.5*(3/2)*base_values.i,
             )
 ctrl = mt.GridFollowingCtrl(pars)
 
 
 # %%
 
-# Set the active and reactive power references
+# Set the reactive power reference
 ctrl.q_g_ref = lambda t: (t > .04)*(4e3)
 
-# DC-side current (only if dc model is used)
+# DC-side current (seen as a disturbance from the converter perspective)
 if dc_model != None:
     mdl.dc_model.i_dc = lambda t: (t > .06)*(10)
 
 # AC-voltage magnitude (to simulate voltage dips or short-circuits)
-u_g_abs_var =  lambda t: np.sqrt(2/3)*400
-mdl.grid_model.u_g_abs_A = u_g_abs_var #phase a
-mdl.grid_model.u_g_abs_B = u_g_abs_var #phase b
-mdl.grid_model.u_g_abs_C = u_g_abs_var #phase c
+e_g_abs_var =  lambda t: np.sqrt(2/3)*400
+mdl.grid_model.e_g_abs = e_g_abs_var # grid voltage magnitude
 
 # DC voltage reference
 ctrl.u_dc_ref = lambda t: 600 + (t > .02)*(50)
 
-
 # Create the simulation object and simulate it
-sim = mt.simulation.Simulation(mdl, ctrl, pwm=True)
+sim = mt.simulation.Simulation(mdl, ctrl, pwm=False)
 sim.simulate(t_stop = .1)
 
 # Print the execution time

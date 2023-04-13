@@ -6,16 +6,9 @@ The dc grid model defined here is used if the dc bus is modelled as a current
 source and the capacitance dynamics need to be modeled.
 
 """
-from __future__ import annotations
-from dataclasses import dataclass, field
-import numpy as np
-from motulator.helpers import (
-    complex2abc,
-    abc2complex
-    )
+from motulator.helpers import complex2abc
 
 # %%
-@dataclass
 class DcGrid:
     """
     DC grid
@@ -30,22 +23,19 @@ class DcGrid:
      G_dc : float
          DC grid conductance (in Siemens)
     i_dc : function
-        External dc current, seen as disturbance, `idc(t)`.
-
-    Returns
-    -------
-    real list, length 1
-        DC voltage at the capacitance level udc
+        External dc current, seen as disturbance, `i_dc(t)`.
 
      """
-    C_dc: float = 1e-3
-    G_dc: float = 0
-    i_dc: Callable[[float], float] = field(repr=False, default=lambda t: 0)
-    # Initial values
-    u_dc0: float = field(repr=False, default=540) #same value as converter.py
-    # Initial value of the DC-bus voltage
     
-    def dc_current(self, i_c_abc, q):
+    def __init__(self, C_dc=1e-3, G_dc=0, i_dc=lambda t: 0, u_dc0 = 650):
+        self.C_dc = C_dc
+        self.G_dc = G_dc
+        self.i_dc = i_dc
+        # Initial values
+        self.u_dc0 = u_dc0
+    
+    @staticmethod
+    def dc_current(i_c_abc, q):
         """
         Compute the DC-side converter current, used to model the DC-bus voltage
         dynamics.
@@ -73,7 +63,6 @@ class DcGrid:
         
         return i_L
     
-    
     def f(self, t, u_dc, i_c_abc, q):
         # pylint: disable=R0913
         """
@@ -94,7 +83,7 @@ class DcGrid:
         Returns
         -------
         du_dc: float
-            Time derivative of the state variable, udc (DC capacitance voltage)
+            Time derivative of the state variable, u_dc (capacitance voltage)
 
         """
         
@@ -108,7 +97,7 @@ class DcGrid:
 
     def meas_dc_voltage(self):
         """
-        Measure the DC voltage at the end of the sampling period
+        Measure the DC voltage at the end of the sampling period.
     
         Returns
         -------

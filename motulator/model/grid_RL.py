@@ -4,91 +4,12 @@ This module contains continuous-time models for first order dynamic model of
 an RL line.
 
 """
-from __future__ import annotations
-from collections.abc import Callable
-from dataclasses import dataclass, field
 import numpy as np
+
 from motulator.helpers import complex2abc
 
 
-import os.path
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
 # %%
-@dataclass
-class InductiveGrid:
-    """
-    Inductive grid model where one of the output voltage is controllable.
-
-    An inductive grid model is built using a simple inductance model where the
-    two output voltages are imposed and the current can be calculated using
-    dynamic equations.
-
-    Parameters
-    ----------
-    L_g : float
-        Grid inductance (in H)
-    R_g : float
-        Grid resistance (in Ohm)
-    u_c_s : function
-        External voltage at the impedance outputs, `ucs(t)`.
-
-    Returns
-    -------
-    complex list, length 1
-        Line current in stator frame, igs
-
-    """
-    L_g: float = 10e-3
-    R_g: float = 0
-    u_cs: Callable[[complex], complex] = field(repr=False,
-                                                default=lambda t: 0+1j*0)
-    # Initial values
-    i_gs0: complex = field(repr=False, default=0j)
-
-    
-    def f(self, t, i_gs, u_gs, w_g):
-        # pylint: disable=R0913
-        """
-        Compute the state derivatives.
-
-        Parameters
-        ----------
-        t: real
-            Time.
-        i_gs : complex
-            Line current.
-        u_gs : complex
-            Grid voltage.
-        w_g : float
-            Grid angular speed (in mechanical rad/s).
-
-        Returns
-        -------
-        di_gs: complex
-            Time derivative of the state vector, igs (line current)
-
-        """
-        di_gs = (self.u_cs(t) - u_gs - self.R_g*i_gs)/self.L_g
-        return di_gs
-
-    def meas_currents(self):
-        """
-        Measure the phase currents at the end of the sampling period.
-
-        Returns
-        -------
-        i_g_abc : 3-tuple of floats
-            Phase currents.
-
-        """
-        # Stator current space vector in stator coordinates
-        i_g_abc = complex2abc(self.i_gs0)  # + noise + offset ...
-        return i_g_abc
-
-# %%
-@dataclass
 class InverterToInductiveGrid:
     """
     Inductive grid model with a connection made to the inverter outputs.
@@ -99,24 +20,62 @@ class InverterToInductiveGrid:
 
     Parameters
     ----------
+    L_f : float
+        Filter inductance (in H)
+    R_f : float
+        Filter resistance (in Ohm)
     L_g : float
         Grid inductance (in H)
     R_g : float
         Grid resistance (in Ohm)
 
-    Returns
-    -------
-    complex list, length 1
-        Line current in stator frame, igs
-
     """
-    L_g: float = 10e-3
-    R_g: float = 0
-    # Initial values
-    i_gs0: complex = field(repr=False, default=0j)
+    def __init__(self, U_gN=400*np.sqrt(2/3), L_f = 6e-3, R_f=0, L_g=0, R_g=0):
+        self.L_f = L_f
+        self.R_f = R_f
+        self.L_g = L_g
+        self.R_g = R_g
+        # Storing the PCC voltage value
+        self.u_gs0 = U_gN + 0j
+        # Initial values
+        self.i_gs0 = 0j
 
+
+
+    def pcc_voltages(self, i_gs, u_cs, e_gs):
+        """
+        Compute the PCC voltage, located in-between the filter and the line
+        impedances
+
+        Parameters
+        ----------
+        i_gs : complex
+            Line current (A).
+        u_cs : complex
+            Converter-side voltage (V).
+        e_gs : complex
+            Grid-side voltage (V).
+
+        Returns
+        -------
+        u_gs : complex
+            Voltage at the point of common coupling (PCC).
+
+        """
+        # calculation of voltage-related term
+        v_tu = ((self.L_g/(self.L_g+self.L_f))*u_cs + 
+            (self.L_f/(self.L_g+self.L_f))*e_gs)
+        # calculation of current-related term
+        v_ti = (
+            ((self.R_g*self.L_f - self.R_f*self.L_g)/(self.L_g+self.L_f))*i_gs)
+        
+        # PCC voltage in alpha-beta coordinates
+        u_gs = v_tu + v_ti
+        
+        return u_gs
     
-    def f(self, i_gs, u_cs, u_gs, w_g):
+    
+    def f(self, i_gs, u_cs, e_gs):
         # pylint: disable=R0913
         """
         Compute the state derivatives.
@@ -124,21 +83,24 @@ class InverterToInductiveGrid:
         Parameters
         ----------
         i_gs : complex
-            Line current.
+            Line current (A).
         u_cs : complex
-            Point of Common Coupling (PCC) voltage.
-        u_gs : complex
-            Grid voltage.
-        w_g : float
-            Grid angular speed (in mechanical rad/s).
+            Converter-side voltage (V).
+        e_gs : complex
+            Grid-side voltage (V).
 
         Returns
         -------
         di_gs: complex
-            Time derivative of the state vector, igs (line current)
+            Time derivative of the complex state i_gs (line current, in A)
 
         """
-        di_gs = (u_cs - u_gs - self.R_g*i_gs)/self.L_g
+        # Calculation of the total impedance
+        L_t = self.L_f + self.L_g
+        R_t = self.R_f + self.R_g
+        
+        di_gs = (u_cs - e_gs - R_t*i_gs)/L_t
+        
         return di_gs
 
     def meas_currents(self):
@@ -151,6 +113,21 @@ class InverterToInductiveGrid:
             Phase currents.
 
         """
-        # Stator current space vector in stator coordinates
+        # Line current space vector in stationary coordinates
         i_g_abc = complex2abc(self.i_gs0)  # + noise + offset ...
         return i_g_abc
+    
+    
+    def meas_pcc_voltage(self):
+        """
+        Measure the PCC voltages at the end of the sampling period.
+
+        Returns
+        -------
+        u_g_abc : 3-tuple of floats
+            Phase voltage at the point of common coupling (PCC).
+
+        """  
+        # PCC voltage space vector in stationary coordinates
+        u_g_abc = complex2abc(self.u_gs0)  # + noise + offset ...
+        return u_g_abc

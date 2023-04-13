@@ -1,24 +1,16 @@
 # pylint: disable=C0103
 """
-This module contains continuous-time models for grid models using a constant voltage approximation.
+This module contains continuous-time models for grid.
 
 """
-from __future__ import annotations
-from collections.abc import Callable
 import numpy as np
-from dataclasses import dataclass, field
+
 from motulator.helpers import (
     complex2abc,
     abc2complex
     )
 
-import os.path
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
-
 # %%
-@dataclass
 class Grid:
     """
     Grid subsystem.
@@ -28,26 +20,22 @@ class Grid:
     Parameters
     ----------
     U_gN : float
-        Voltage peak value (phase to ground)
+        nominal voltage peak value (phase to ground)
     w_g : float
         grid constant frequency
-
+    e_g_abs : function
+        3-phase grid voltage magnitude
     """
     
-    U_gN: float = 400*np.sqrt(2/3) #in volts
-    w_g: float = 2*np.pi*50 #in rad/s
-    u_g_abs_A: Callable[[float], float] = field(repr=False,
-                                                default=lambda t: 400*np.sqrt(2/3)) #in volts
-    u_g_abs_B: Callable[[float], float] = field(repr=False,
-                                                default=lambda t: 400*np.sqrt(2/3)) #in volts
-    u_g_abs_C: Callable[[float], float] = field(repr=False,
-                                                default=lambda t: 400*np.sqrt(2/3)) #in volts
+    def __init__(self, w_N=2*np.pi*50,
+                 e_g_abs=lambda t: 400*np.sqrt(2/3)):
+        self.w_N = w_N
+        self.e_g_abs = e_g_abs
 
     def voltages(self, t):
         """
-        Compute the voltage in stator frame at the grid output:
-           (remark: I think it could also be possible to implement this function using theta_0 instead)
-
+        Compute the voltage in stationary frame at the grid output:
+           
         Parameters
         ----------
         t : float
@@ -55,21 +43,21 @@ class Grid:
 
         Returns
         -------
-        u_gs: complex
+        e_gs: complex
             grid complex voltage.
 
         """
         # Integration of frequency to obtain the angle
-        theta = self.w_g*t        
+        theta = self.w_N*t        
         
         # Calculation of the three-phase voltage
-        u_g_a = self.u_g_abs_A(t)*np.cos(theta)
-        u_g_b = self.u_g_abs_B(t)*np.cos(theta-2*np.pi/3)
-        u_g_c = self.u_g_abs_C(t)*np.cos(theta-4*np.pi/3)
+        e_g_a = self.e_g_abs(t)*np.cos(theta)
+        e_g_b = self.e_g_abs(t)*np.cos(theta-2*np.pi/3)
+        e_g_c = self.e_g_abs(t)*np.cos(theta-4*np.pi/3)
         
         
-        u_gs = abc2complex([u_g_a, u_g_b, u_g_c])
-        return u_gs
+        e_gs = abc2complex([e_g_a, e_g_b, e_g_c])
+        return e_gs
 
 
     def meas_voltages(self, t):
@@ -78,10 +66,10 @@ class Grid:
 
         Returns
         -------
-        u_g_abc : 3-tuple of floats
+        e_g_abc : 3-tuple of floats
             Phase voltages.
 
         """
         # Grid voltage
-        u_g_abc = complex2abc(self.voltages(t))  # + noise + offset ...
-        return u_g_abc
+        e_g_abc = complex2abc(self.voltages(t))  # + noise + offset ...
+        return e_g_abc

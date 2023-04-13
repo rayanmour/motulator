@@ -25,8 +25,8 @@ base_values = mt.BaseValuesElectrical(
 
 # %%
 # Configure the system model
-rl_model = mt.InverterToInductiveGrid(L_g=10e-3, R_g=0)
-grid_model = mt.Grid(U_gN=np.sqrt(2/3)*400, w_g=2*np.pi*50)
+rl_model = mt.InverterToInductiveGrid(L_f=10e-3, L_g=0, R_g=0)
+grid_model = mt.Grid(w_N=2*np.pi*50)
 dc_model = None
 conv = mt.Inverter(u_dc=650)
 """
@@ -45,8 +45,9 @@ else:
 pars = mt.GridFollowingCtrlPars(
             L_f=10e-3,
             R_f=0,
-            S_base = 10e3,
-            i_max = 1.5,
+            f_sw = 4e3,
+            T_s = 1/(8e3),
+            I_max = 1.5*(3/2)*base_values.i,
             )
 ctrl = mt.GridFollowingCtrl(pars)
 
@@ -59,14 +60,11 @@ ctrl.p_g_ref = lambda t: (t > .02)*(5e3)
 ctrl.q_g_ref = lambda t: (t > .04)*(4e3)
 
 # AC-voltage magnitude (to simulate voltage dips or short-circuits)
-u_g_abs_var =  lambda t: np.sqrt(2/3)*400
-mdl.grid_model.u_g_abs_A = u_g_abs_var # a-phase
-mdl.grid_model.u_g_abs_B = u_g_abs_var # b-phase
-mdl.grid_model.u_g_abs_C = u_g_abs_var # c-phase
-
+e_g_abs_var =  lambda t: np.sqrt(2/3)*400
+mdl.grid_model.e_g_abs = e_g_abs_var # grid voltage magnitude
 
 # Create the simulation object and simulate it
-sim = mt.Simulation(mdl, ctrl, pwm=True)
+sim = mt.Simulation(mdl, ctrl, pwm=False)
 sim.simulate(t_stop = .1)
 
 # Print the execution time
@@ -74,4 +72,4 @@ print('\nExecution time: {:.2f} s'.format((time.time() - start_time)))
 
 # Plot results in SI or per unit values
 #mt.plot_grid(sim)
-mt.plot_grid(sim, base=base_values)
+mt.plot_grid(sim, base=base_values,plot_pcc_voltage=True)

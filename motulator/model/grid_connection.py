@@ -3,20 +3,15 @@
 This module contains continuous-time models for grid connected converters.
 
 Peak-valued complex space vectors are used. The space vector models are
-implemented in stator coordinates.
+implemented in stationary coordinates.
 
 """
-from __future__ import annotations
-from dataclasses import dataclass, field
+
 import numpy as np
-from motulator.helpers import Bunch
-from motulator.helpers import (
-    complex2abc,
-    abc2complex
-    )
+
+from motulator.helpers import Bunch, complex2abc
 
 # %%
-@dataclass
 class GridCompleteModel:
     """
     Continuous-time model for a grid model with an RL impedance model.
@@ -61,6 +56,7 @@ class GridCompleteModel:
 
         """
         x0 = [self.rl_model.i_gs0]
+
         return x0
 
     def set_initial_values(self, t0, x0):
@@ -75,7 +71,12 @@ class GridCompleteModel:
         """
         self.t0 = t0
         self.rl_model.i_gs0 = x0[0]
-
+        # calculation of converter-side voltage
+        u_cs0 = self.conv.ac_voltage(self.conv.q, self.conv.u_dc0)
+        # calculation of grid-side voltage
+        e_gs0 = self.grid_model.voltages(t0)
+        # update pcc voltage
+        self.rl_model.u_gs0 = self.rl_model.pcc_voltages(x0[0], u_cs0, e_gs0)
 
     def f(self, t, x):
         """
@@ -98,9 +99,9 @@ class GridCompleteModel:
         i_gs = x
         # Interconnections: outputs for computing the state derivatives
         u_cs = self.conv.ac_voltage(self.conv.q, self.conv.u_dc0)
-        u_gs = self.grid_model.voltages(t)
+        e_gs = self.grid_model.voltages(t)
         # State derivatives
-        rl_f = self.rl_model.f(i_gs, u_cs, u_gs, self.grid_model.w_g)
+        rl_f = self.rl_model.f(i_gs, u_cs, e_gs)
         # List of state derivatives 
         return rl_f
 
@@ -117,6 +118,7 @@ class GridCompleteModel:
         self.data.t.extend(sol.t)
         self.data.i_gs.extend(sol.y[0])
         self.data.q.extend(sol.q)
+
                                     
     def post_process(self):
         """
@@ -129,13 +131,16 @@ class GridCompleteModel:
         self.data.q = np.asarray(self.data.q)
 
         # Some useful variables
-        self.data.u_gs = self.grid_model.voltages(self.data.t)
-        self.data.theta = np.mod(self.data.t*self.grid_model.w_g, 2*np.pi)
+        self.data.e_gs = self.grid_model.voltages(self.data.t)
+        self.data.theta = np.mod(self.data.t*self.grid_model.w_N, 2*np.pi)
         self.data.u_cs = self.conv.ac_voltage(self.data.q, self.conv.u_dc0)
+        self.data.u_gs = self.rl_model.pcc_voltages(
+            self.data.i_gs,
+            self.data.u_cs,
+            self.data.e_gs)
 
 
 # %%
-@dataclass
 class ACDCGridCompleteModel:
     """
     Continuous-time model for a grid model with an RL impedance model.
@@ -200,7 +205,12 @@ class ACDCGridCompleteModel:
         self.rl_model.i_gs0 = x0[0]
         self.dc_model.u_dc0 = x0[1].real
         self.conv.u_dc0 = x0[1].real
-
+        # calculation of converter-side voltage
+        u_cs0 = self.conv.ac_voltage(self.conv.q, x0[1].real)
+        # calculation of grid-side voltage
+        e_gs0 = self.grid_model.voltages(t0)
+        # update pcc voltage
+        self.rl_model.u_gs0 = self.rl_model.pcc_voltages(x0[0], u_cs0, e_gs0)
 
     def f(self, t, x):
         """
@@ -223,13 +233,13 @@ class ACDCGridCompleteModel:
         i_gs, u_dc = x
         # Interconnections: outputs for computing the state derivatives
         u_cs = self.conv.ac_voltage(self.conv.q, u_dc)
-        u_gs = self.grid_model.voltages(t)
+        e_gs = self.grid_model.voltages(t)
         q = self.conv.q
         i_g_abc = complex2abc(i_gs)
         # State derivatives
-        rl_f = self.rl_model.f(i_gs, u_cs, u_gs, self.grid_model.w_g)
+        rl_f = self.rl_model.f(i_gs, u_cs, e_gs)
         dc_f = self.dc_model.f(t, u_dc, i_g_abc, q)
-        # List of state derivatives 
+        # List of state derivatives
         return [rl_f, dc_f]
 
     def save(self, sol):
@@ -248,7 +258,8 @@ class ACDCGridCompleteModel:
         self.data.q.extend(sol.q)
         q_abc=complex2abc(np.asarray(sol.q))
         i_c_abc=complex2abc(sol.y[0])
-        self.data.i_L.extend(q_abc[0]*i_c_abc[0] + q_abc[1]*i_c_abc[1] + q_abc[2]*i_c_abc[2])
+        self.data.i_L.extend(
+            q_abc[0]*i_c_abc[0] + q_abc[1]*i_c_abc[1] + q_abc[2]*i_c_abc[2])
                                     
     def post_process(self):
         """
@@ -263,6 +274,10 @@ class ACDCGridCompleteModel:
         #self.data.theta = np.asarray(self.data.theta)
         # Some useful variables
         self.data.i_L = np.asarray(self.data.i_L)
-        self.data.u_gs = self.grid_model.voltages(self.data.t)
-        self.data.theta = np.mod(self.data.t*self.grid_model.w_g, 2*np.pi)
+        self.data.e_gs = self.grid_model.voltages(self.data.t)
+        self.data.theta = np.mod(self.data.t*self.grid_model.w_N, 2*np.pi)
         self.data.u_cs = self.conv.ac_voltage(self.data.q, self.conv.u_dc0)
+        self.data.u_gs = self.rl_model.pcc_voltages(
+            self.data.i_gs,
+            self.data.u_cs,
+            self.data.e_gs)
