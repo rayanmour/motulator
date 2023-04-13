@@ -101,8 +101,6 @@ class PSCtrl(Ctrl):
         self.f_sw = pars.f_sw
         # Activation of reference feedforward action
         self.on_rf = pars.on_rf
-        # Activation of the PCC voltage control option
-        self.on_u_g = pars.on_u_g
         # Activation of DC-voltage controller
         self.on_v_dc = pars.on_v_dc
         # References sent from the user
@@ -165,16 +163,16 @@ class PSCtrl(Ctrl):
         i_c = np.exp(-1j*self.theta_psc)*abc2complex(i_c_abc)
         
         # Calculation of active and reactive powers:
-        if self.on_u_g:
-            p_calc, __ = self.power_calc.output(i_c, u_g)
-        else:   
-            p_calc, __ = self.power_calc.output(i_c, self.u_c_ref_lim)
+        p_calc, __ = self.power_calc.output(i_c, self.u_c_ref_lim)
+        # remark: there is no need to use u_g when self.on_u_g = 1 if we 
+        # make the assumption that the output filter is lossless.
         
         # Synchronization through active power variations
         w_c, theta_c = self.power_synch.output(p_calc, p_g_ref, w_c_ref)
 
         # Voltage reference in synchronous coordinates
-        u_c_ref, i_c_ref = self.current_ctrl.output(i_c,p_g_ref,v_ref,w_c_ref)
+        u_c_ref, i_c_ref, i_c_filt = self.current_ctrl.output(
+                                        i_c,p_g_ref,v_ref,w_c_ref)
         
         # Compute the PWM
         d_abc_ref, u_c_ref_lim = self.pwm.output(u_c_ref, u_dc,
@@ -196,7 +194,7 @@ class PSCtrl(Ctrl):
         self.pwm.update(u_c_ref_lim)
         self.power_synch.update(theta_c)
         self.theta_psc = theta_c
-        self.current_ctrl.update(i_c)
+        self.current_ctrl.update(i_c, i_c_filt)
         if self.on_v_dc == 1:
             self.dc_voltage_control.update(e_dc, p_dc_ref, p_dc_ref_lim)
         
@@ -378,7 +376,7 @@ class CurrentCtrl:
         # Calculated maximum current in A
         self.I_max = pars.I_max
         #initial states
-        self.x_c_old =0j 
+        self.i_c_filt =0j 
     
             
     def output(self, i_c, p_g_ref, v_ref, w_c_ref):
@@ -403,12 +401,13 @@ class CurrentCtrl:
             converter voltage reference (V).
         i_c_ref : complex
             converter current reference in dq frame (A).
+        i_c_filt : complex
+            low-pass filtered converter current in dq frame (A).
 
         """
 
         # Low pass filter for the current:
-        i_c_filt = ((1-self.T_s*self.w_0_cc)*self.x_c_old +
-            self.K_cc*(self.T_s*self.w_0_cc)*i_c)
+        i_c_filt = self.i_c_filt
         
         # Definition of the voltage reference in complex form
         v_c_ref = v_ref + 1j*0
@@ -439,10 +438,10 @@ class CurrentCtrl:
            self.on_u_g*1j*self.L_f*w_c_ref*i_c)
         
         
-        return u_c_ref, i_c_ref
+        return u_c_ref, i_c_ref, i_c_filt
     
         
-    def update(self, i_c):
+    def update(self, i_c, i_c_filt):
         """
         Update the integral state.
     
@@ -450,15 +449,14 @@ class CurrentCtrl:
         ----------
         i_c : complex
             converter current in dq frame (A).
+        i_c_filt : complex
+            low-pass filtered converter current in dq frame (A).
     
         """
 
         # Update the current low pass filer integrator
-        re_i = ((1-self.T_s*self.w_0_cc)*np.real(self.x_c_old) +
-            self.K_cc*(self.T_s*self.w_0_cc)*np.real(i_c))
-        im_i = ((1-self.T_s*self.w_0_cc)*np.imag(self.x_c_old) +
-            self.K_cc*(self.T_s*self.w_0_cc)*np.imag(i_c))
-        self.x_c_old = re_i + 1j*im_i
+        self.i_c_filt = (1 - self.T_s*self.w_0_cc)*i_c_filt + (
+            self.K_cc*self.T_s*self.w_0_cc*i_c)
 
 # %%        
 class DCVoltageControl:

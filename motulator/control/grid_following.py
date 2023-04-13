@@ -119,7 +119,7 @@ class GridFollowingCtrl(Ctrl):
         self.u_c_i = 0j
         self.theta_p = 0
         self.u_c_ref_lim = pars.u_gN + 1j*0
-        self.x_g_old = pars.u_gN + 1j*0
+        self.u_g_filt = pars.u_gN + 1j*0
  
     def __call__(self, mdl):
         """
@@ -186,9 +186,7 @@ class GridFollowingCtrl(Ctrl):
         
         
         # Low pass filter for the feedforward PCC voltage:
-        u_g_filt = ((1-self.T_s*self.w_0_ff)*self.x_g_old +
-            self.K_ff*(self.T_s*self.w_0_ff)*u_g)
-        
+        u_g_filt = self.u_g_filt
         
         # Voltage reference in synchronous coordinates
         err_i = i_c_ref - i_c # current controller error signal
@@ -221,11 +219,8 @@ class GridFollowingCtrl(Ctrl):
         if self.on_v_dc == 1:
             self.dc_voltage_control.update(e_dc, p_dc_ref, p_dc_ref_lim)
         # Update the low pass filer integrator for feedforward action
-        re_u = ((1-self.T_s*self.w_0_ff)*np.real(self.x_g_old) +
-            self.K_ff*(self.T_s*self.w_0_ff)*np.real(u_g))
-        im_u = ((1-self.T_s*self.w_0_ff)*np.imag(self.x_g_old) +
-            self.K_ff*(self.T_s*self.w_0_ff)*np.imag(u_g))
-        self.x_g_old = re_u + 1j*im_u
+        self.u_g_filt = (1 - self.T_s*self.w_0_ff)*u_g_filt + (
+            self.K_ff*self.T_s*self.w_0_ff*u_g)
 
         return self.T_s, d_abc_ref
     
