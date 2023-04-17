@@ -140,9 +140,9 @@ class GridFollowingCtrl(Ctrl):
 
         """
         # Measure the feedback signals
-        i_c_abc = mdl.rl_model.meas_currents()
+        i_c_abc = mdl.grid_filter.meas_currents()
         u_dc = mdl.conv.meas_dc_voltage()
-        u_g_abc = mdl.rl_model.meas_pcc_voltage()
+        u_g_abc = mdl.grid_filter.meas_pcc_voltage()
         
         # Define the active and reactive power references at the given time
         u_dc_ref = self.u_dc_ref(self.t)

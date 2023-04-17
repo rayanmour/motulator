@@ -1,7 +1,6 @@
 # pylint: disable=C0103
 """
-This module contains continuous-time models for first order dynamic model of
-an RL line.
+This module contains continuous-time models for AC filters
 
 """
 import numpy as np
@@ -10,12 +9,12 @@ from motulator.helpers import complex2abc
 
 
 # %%
-class InverterToInductiveGrid:
+class LFilter:
     """
-    Inductive grid model with a connection made to the inverter outputs.
+    Inductive filter model with a connection made to the inverter outputs.
 
-    An inductive grid model is built using a simple inductance model where the
-    two output voltages are imposed and the current can be calculated using
+    An inductive filter model is built using a simple inductance model where
+    the two output voltages are imposed and the current can be calculated using
     dynamic equations.
 
     Parameters
@@ -134,7 +133,7 @@ class InverterToInductiveGrid:
     
     
     # %%
-class LCLGrid:
+class LCLFilter:
     """
     LCL filter and inductive grid model with a connection made to the 
     inverter outputs.

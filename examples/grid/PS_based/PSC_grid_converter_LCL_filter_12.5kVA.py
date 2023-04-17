@@ -26,12 +26,13 @@ base_values = mt.BaseValuesElectrical(
 
 # %%
 # Configure the system model (grid model)
-rl_model = mt.LCLGrid(L_fc = 3e-3, C_f = 10e-6, L_fg = 3e-3, L_g=30e-3, R_g=0)
+grid_filter = mt.LCLFilter(
+    L_fc = 3e-3, C_f = 10e-6, L_fg = 3e-3, L_g=30e-3, R_g=0)
 grid_model = mt.Grid(w_N=2*np.pi*50)
 dc_model = None
 conv = mt.Inverter(u_dc=650)
 
-mdl = mt.ACDCGridLCLModel(rl_model, grid_model, dc_model, conv)
+mdl = mt.ACDCGridLCLModel(grid_filter, grid_model, dc_model, conv)
 
 pars = mt.PSCtrlPars(
         L_f=3e-3,

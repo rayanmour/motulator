@@ -27,7 +27,7 @@ base_values = mt.BaseValuesElectrical(
 
 # %%
 # Configure the system model (grid model)
-rl_model = mt.InverterToInductiveGrid(L_f = 10e-3, L_g=0, R_g=0)
+grid_filter = mt.LFilter(L_f = 10e-3, L_g=0, R_g=0)
 grid_model = mt.Grid(w_N=2*np.pi*50)
 dc_model = mt.DcGrid(C_dc = 1e-3, u_dc0=600, G_dc=0)
 conv = mt.Inverter(u_dc=600)
@@ -40,10 +40,10 @@ REMARK:
 """
     
 if dc_model == None:
-    mdl = mt.GridCompleteModel(rl_model, grid_model, conv)
+    mdl = mt.GridCompleteModel(grid_filter, grid_model, conv)
 else:
     mdl = mt.ACDCGridCompleteModel(
-        rl_model, grid_model, dc_model, conv
+        grid_filter, grid_model, dc_model, conv
         )
 
 

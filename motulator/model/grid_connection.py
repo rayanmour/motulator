@@ -22,7 +22,7 @@ class GridCompleteModel:
 
     Parameters
     ----------
-    rl_model : InductiveGrid
+    grid_filter : LFilter
         RL line dynamic model.
     grid_model : Grid
         Constant voltage source model.
@@ -31,8 +31,8 @@ class GridCompleteModel:
 
     """
     
-    def __init__(self, rl_model=None, grid_model=None, conv=None):
-        self.rl_model = rl_model
+    def __init__(self, grid_filter=None, grid_model=None, conv=None):
+        self.grid_filter = grid_filter
         self.grid_model = grid_model
         self.conv = conv
 
@@ -55,7 +55,7 @@ class GridCompleteModel:
             Initial values of the state variables.
 
         """
-        x0 = [self.rl_model.i_gs0]
+        x0 = [self.grid_filter.i_gs0]
 
         return x0
 
@@ -70,13 +70,13 @@ class GridCompleteModel:
 
         """
         self.t0 = t0
-        self.rl_model.i_gs0 = x0[0]
+        self.grid_filter.i_gs0 = x0[0]
         # calculation of converter-side voltage
         u_cs0 = self.conv.ac_voltage(self.conv.q, self.conv.u_dc0)
         # calculation of grid-side voltage
         e_gs0 = self.grid_model.voltages(t0)
         # update pcc voltage
-        self.rl_model.u_gs0 = self.rl_model.pcc_voltages(x0[0], u_cs0, e_gs0)
+        self.grid_filter.u_gs0 = self.grid_filter.pcc_voltages(x0[0], u_cs0, e_gs0)
 
     def f(self, t, x):
         """
@@ -101,7 +101,7 @@ class GridCompleteModel:
         u_cs = self.conv.ac_voltage(self.conv.q, self.conv.u_dc0)
         e_gs = self.grid_model.voltages(t)
         # State derivatives
-        rl_f = self.rl_model.f(i_gs, u_cs, e_gs)
+        rl_f = self.grid_filter.f(i_gs, u_cs, e_gs)
         # List of state derivatives 
         return rl_f
 
@@ -134,7 +134,7 @@ class GridCompleteModel:
         self.data.e_gs = self.grid_model.voltages(self.data.t)
         self.data.theta = np.mod(self.data.t*self.grid_model.w_N, 2*np.pi)
         self.data.u_cs = self.conv.ac_voltage(self.data.q, self.conv.u_dc0)
-        self.data.u_gs = self.rl_model.pcc_voltages(
+        self.data.u_gs = self.grid_filter.pcc_voltages(
             self.data.i_gs,
             self.data.u_cs,
             self.data.e_gs)
@@ -151,7 +151,7 @@ class ACDCGridCompleteModel:
 
     Parameters
     ----------
-    rl_model : InductiveGrid
+    grid_filter : LFilter
         RL line dynamic model.
     grid_model : Grid
         Constant voltage source model.
@@ -162,8 +162,8 @@ class ACDCGridCompleteModel:
 
     """
     
-    def __init__(self, rl_model=None, grid_model=None, dc_model=None, conv=None):
-        self.rl_model = rl_model
+    def __init__(self, grid_filter=None, grid_model=None, dc_model=None, conv=None):
+        self.grid_filter = grid_filter
         self.grid_model = grid_model
         self.dc_model = dc_model
         self.conv = conv
@@ -188,7 +188,7 @@ class ACDCGridCompleteModel:
             Initial values of the state variables.
 
         """
-        x0 = [self.rl_model.i_gs0, self.dc_model.u_dc0]
+        x0 = [self.grid_filter.i_gs0, self.dc_model.u_dc0]
         return x0
 
     def set_initial_values(self, t0, x0):
@@ -202,7 +202,7 @@ class ACDCGridCompleteModel:
 
         """
         self.t0 = t0
-        self.rl_model.i_gs0 = x0[0]
+        self.grid_filter.i_gs0 = x0[0]
         self.dc_model.u_dc0 = x0[1].real
         self.conv.u_dc0 = x0[1].real
         # calculation of converter-side voltage
@@ -210,7 +210,7 @@ class ACDCGridCompleteModel:
         # calculation of grid-side voltage
         e_gs0 = self.grid_model.voltages(t0)
         # update pcc voltage
-        self.rl_model.u_gs0 = self.rl_model.pcc_voltages(x0[0], u_cs0, e_gs0)
+        self.grid_filter.u_gs0 = self.grid_filter.pcc_voltages(x0[0], u_cs0, e_gs0)
 
     def f(self, t, x):
         """
@@ -237,7 +237,7 @@ class ACDCGridCompleteModel:
         q = self.conv.q
         i_g_abc = complex2abc(i_gs)
         # State derivatives
-        rl_f = self.rl_model.f(i_gs, u_cs, e_gs)
+        rl_f = self.grid_filter.f(i_gs, u_cs, e_gs)
         dc_f = self.dc_model.f(t, u_dc, i_g_abc, q)
         # List of state derivatives
         return [rl_f, dc_f]
@@ -277,7 +277,7 @@ class ACDCGridCompleteModel:
         self.data.e_gs = self.grid_model.voltages(self.data.t)
         self.data.theta = np.mod(self.data.t*self.grid_model.w_N, 2*np.pi)
         self.data.u_cs = self.conv.ac_voltage(self.data.q, self.conv.u_dc0)
-        self.data.u_gs = self.rl_model.pcc_voltages(
+        self.data.u_gs = self.grid_filter.pcc_voltages(
             self.data.i_gs,
             self.data.u_cs,
             self.data.e_gs)
@@ -294,7 +294,7 @@ class ACDCGridLCLModel:
 
     Parameters
     ----------
-    rl_model : LCLGrid
+    grid_filter : LCLFilter
         LCL dynamic model.
     grid_model : Grid
         Constant voltage source model.
@@ -305,8 +305,8 @@ class ACDCGridLCLModel:
 
     """
     
-    def __init__(self, rl_model=None, grid_model=None, dc_model=None, conv=None):
-        self.rl_model = rl_model
+    def __init__(self, grid_filter=None, grid_model=None, dc_model=None, conv=None):
+        self.grid_filter = grid_filter
         self.grid_model = grid_model
         self.dc_model = dc_model
         self.conv = conv
@@ -336,15 +336,15 @@ class ACDCGridLCLModel:
         """
         if self.dc_model != None:
             x0 = [
-                self.rl_model.i_cs0,
-                self.rl_model.u_fs0,
-                self.rl_model.i_gs0,
+                self.grid_filter.i_cs0,
+                self.grid_filter.u_fs0,
+                self.grid_filter.i_gs0,
                 self.dc_model.u_dc0]
         else:
             x0 = [
-                self.rl_model.i_cs0,
-                self.rl_model.u_fs0,
-                self.rl_model.i_gs0]
+                self.grid_filter.i_cs0,
+                self.grid_filter.u_fs0,
+                self.grid_filter.i_gs0]
                 
         return x0
 
@@ -359,16 +359,16 @@ class ACDCGridLCLModel:
 
         """
         self.t0 = t0
-        self.rl_model.i_cs0 = x0[0]
-        self.rl_model.u_fs0 = x0[1]
-        self.rl_model.i_gs0 = x0[2]
+        self.grid_filter.i_cs0 = x0[0]
+        self.grid_filter.u_fs0 = x0[1]
+        self.grid_filter.i_gs0 = x0[2]
         if self.dc_model != None:
             self.dc_model.u_dc0 = x0[3].real
             self.conv.u_dc0 = x0[3].real
         # calculation of grid-side voltage
         e_gs0 = self.grid_model.voltages(t0)
         # update pcc voltage
-        self.rl_model.u_gs0 = self.rl_model.pcc_voltages(x0[2], x0[1], e_gs0)
+        self.grid_filter.u_gs0 = self.grid_filter.pcc_voltages(x0[2], x0[1], e_gs0)
 
     def f(self, t, x):
         """
@@ -400,7 +400,7 @@ class ACDCGridLCLModel:
         q = self.conv.q
         i_c_abc = complex2abc(i_cs)
         # State derivatives
-        lcl_f = self.rl_model.f(i_cs, u_fs, i_gs, u_cs, e_gs)
+        lcl_f = self.grid_filter.f(i_cs, u_fs, i_gs, u_cs, e_gs)
         all_f = lcl_f
         if self.dc_model != None:
             dc_f = self.dc_model.f(t, u_dc, i_c_abc, q)
@@ -452,7 +452,7 @@ class ACDCGridLCLModel:
         self.data.e_gs = self.grid_model.voltages(self.data.t)
         self.data.theta = np.mod(self.data.t*self.grid_model.w_N, 2*np.pi)
         self.data.u_cs = self.conv.ac_voltage(self.data.q, self.conv.u_dc0)
-        self.data.u_gs = self.rl_model.pcc_voltages(
+        self.data.u_gs = self.grid_filter.pcc_voltages(
             self.data.i_gs,
             self.data.u_fs,
             self.data.e_gs)
