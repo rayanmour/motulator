@@ -41,6 +41,7 @@ from motulator.model.sm_drive import SynchronousMotorDrive
 # import grid converter models
 from motulator.model.grid_RL import (
     InverterToInductiveGrid,
+    LCLGrid,
 )
 from motulator.model.grid_VS import (
     Grid,
@@ -51,6 +52,7 @@ from motulator.model.dc_grid import (
 from motulator.model.grid_connection import (
     GridCompleteModel,
     ACDCGridCompleteModel,
+    ACDCGridLCLModel,
 )
 
 """
