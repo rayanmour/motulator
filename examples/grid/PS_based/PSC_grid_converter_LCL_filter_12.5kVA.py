@@ -62,11 +62,10 @@ ctrl = mt.PSCtrl(pars)
 # %%
 
 # Set the active power reference
-ctrl.p_g_ref = lambda t: ((t > .2)*(4.17e3) + (t > .5)*(4.17e3) + 
-    (t > .8)*(4.17e3) - (t > 1.2)*(12.5e3))
+ctrl.p_g_ref = lambda t: (t > .2)*(12.5e3) - (t > .5)*(6.25e3)
 
 # AC-voltage magnitude (to simulate voltage dips or short-circuits)
-e_g_abs_var =  lambda t: np.sqrt(2/3)*400
+e_g_abs_var =  lambda t: np.sqrt(2/3)*400*(1 - (t > .8)*.5 + (t > 1.2)*.5)
 mdl.grid_model.e_g_abs = e_g_abs_var # grid voltage magnitude
 
 # Create the simulation object and simulate it
