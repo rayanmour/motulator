@@ -49,10 +49,13 @@ from motulator.model.grid_VS import (
 from motulator.model.dc_grid import (
     DcGrid,
 )
-from motulator.model.grid_connection import (
-    GridCompleteModel,
-    ACDCGridCompleteModel,
-    ACDCGridLCLModel,
+from motulator.model.grid_ideal_model import (
+    IdealGridLFilterModel,
+    IdealGridLCLFilterModel,
+)
+from motulator.model.grid_dc_dyn_model import (
+    DCGridLFilterModel,
+    DCGridLCLFilterModel,
 )
 
 """

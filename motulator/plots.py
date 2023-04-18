@@ -294,7 +294,7 @@ def plot_grid(sim, t_range=None, base=None, plot_pcc_voltage=False):
         pu_vals = True
         
     # 3-phase quantities
-    i_c_abc = complex2abc(mdl.i_gs).T
+    i_g_abc = complex2abc(mdl.i_gs).T
     u_g_abc = complex2abc(mdl.u_gs).T
     e_g_abc = complex2abc(mdl.e_gs).T
     
@@ -339,8 +339,8 @@ def plot_grid(sim, t_range=None, base=None, plot_pcc_voltage=False):
         #ax1.set_ylabel('DC-bus voltage (V)')
     
     # Subplot 2: Converter currents
-    ax2.plot(mdl.t, i_c_abc/base.i, linewidth=LW)
-    ax2.legend([r'$i_c^a$',r'$i_c^b$',r'$i_c^c$']
+    ax2.plot(mdl.t, i_g_abc/base.i, linewidth=LW)
+    ax2.legend([r'$i_g^a$',r'$i_g^b$',r'$i_g^c$']
                ,prop={'size': FL}, loc= 'upper right')
     ax2.set_xlim(t_range)
     ax2.set_xticklabels([])

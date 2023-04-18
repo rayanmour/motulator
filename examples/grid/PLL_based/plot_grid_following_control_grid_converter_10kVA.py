@@ -25,7 +25,7 @@ base_values = mt.BaseValuesElectrical(
 
 # %%
 # Configure the system model
-grid_filter = mt.LFilter(L_f=10e-3, L_g=0, R_g=0)
+grid_filter = mt.LFilter(L_f=10e-3, L_g=10e-3, R_g=0)
 grid_model = mt.Grid(w_N=2*np.pi*50)
 dc_model = None
 conv = mt.Inverter(u_dc=650)
@@ -38,9 +38,10 @@ REMARK:
 """
     
 if dc_model == None:
-    mdl = mt.GridCompleteModel(grid_filter, grid_model, conv)
+    mdl = mt.IdealGridLFilterModel(grid_filter, grid_model, conv)
 else:
-    mdl = mt.ACDCGridCompleteModel(grid_filter, grid_model, dc_model, conv)
+    mdl = mt.DCGridLFilterModel(
+        grid_filter, grid_model, dc_model, conv)
 
 pars = mt.GridFollowingCtrlPars(
             L_f=10e-3,

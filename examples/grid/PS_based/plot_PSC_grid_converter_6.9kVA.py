@@ -31,13 +31,11 @@ grid_model = mt.Grid(w_N=2*np.pi*50)
 dc_model = None
 conv = mt.Inverter(u_dc=650)
 
-
 if dc_model == None:
-    mdl = mt.GridCompleteModel(grid_filter, grid_model, conv)
+    mdl = mt.IdealGridLFilterModel(grid_filter, grid_model, conv)
 else:
-    mdl = mt.ACDCGridCompleteModel(
-        grid_filter, grid_model, dc_model, conv
-        )
+    mdl = mt.DCGridLFilterModel(
+        grid_filter, grid_model, dc_model, conv)
 
 pars = mt.PSCtrlPars(
         L_f=6e-3,

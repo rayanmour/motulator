@@ -40,12 +40,10 @@ REMARK:
 """
     
 if dc_model == None:
-    mdl = mt.GridCompleteModel(grid_filter, grid_model, conv)
+    mdl = mt.IdealGridLFilterModel(grid_filter, grid_model, conv)
 else:
-    mdl = mt.ACDCGridCompleteModel(
-        grid_filter, grid_model, dc_model, conv
-        )
-
+    mdl = mt.DCGridLFilterModel(
+        grid_filter, grid_model, dc_model, conv)
 
 pars = mt.GridFollowingCtrlPars(
             L_f=10e-3,
@@ -55,6 +53,7 @@ pars = mt.GridFollowingCtrlPars(
             T_s = 1/(16e3),
             on_v_dc=True,
             I_max = 1.5*(3/2)*base_values.i,
+            p_max = base_values.p,
             )
 ctrl = mt.GridFollowingCtrl(pars)
 

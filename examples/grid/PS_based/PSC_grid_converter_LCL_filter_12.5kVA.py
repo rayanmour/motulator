@@ -27,23 +27,36 @@ base_values = mt.BaseValuesElectrical(
 # %%
 # Configure the system model (grid model)
 grid_filter = mt.LCLFilter(
-    L_fc = 3e-3, C_f = 10e-6, L_fg = 3e-3, L_g=30e-3, R_g=0)
+    L_fc = 3e-3, C_f = 10e-6, L_fg = 3e-3, L_g=20e-3, R_g=0)
 grid_model = mt.Grid(w_N=2*np.pi*50)
 dc_model = None
 conv = mt.Inverter(u_dc=650)
 
-mdl = mt.ACDCGridLCLModel(grid_filter, grid_model, dc_model, conv)
+"""
+REMARK:
+    if you do not want to simulate any DC grid, you should define
+    dc_model = None. This would make the DC voltage constant, using the
+    value given in the converter model.
+    Do not forget also to activate/desactivate the dc-bus control
+"""
+    
+if dc_model == None:
+    mdl = mt.IdealGridLCLFilterModel(grid_filter, grid_model, conv)
+else:
+    mdl = mt.DCGridLCLFilterModel(
+            grid_filter, grid_model, dc_model, conv)
 
 pars = mt.PSCtrlPars(
         L_f=3e-3,
         R_f=0,
-        f_sw = 4e3,
-        T_s = 1/(8e3),
+        f_sw = 8e3,
+        T_s = 1/(16e3),
         on_rf=False,
         on_v_dc=False,
         I_max = 1.5*(3/2)*base_values.i,
         w_0_cc = 2*np.pi*5,
-        R_a = .2*base_values.Z)
+        R_a = .2*base_values.Z,
+        )
 ctrl = mt.PSCtrl(pars)
 
 # %%
