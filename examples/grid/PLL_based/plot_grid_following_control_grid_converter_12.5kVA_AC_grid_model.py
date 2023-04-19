@@ -1,6 +1,6 @@
 """
-Example simulation script: 10-kVA grid converter connected to a symmetrical
-three-phase AC voltage source (grid) through an inductive filter.
+Example simulation script: 12.5-kVA grid converter connected to a symmetrical
+three-phase AC grid with electromechanical dynamics through an L filter.
     
 The control system includes
     - Phase-Locked Loop (PLL) to synchronize with the grid;
@@ -26,7 +26,7 @@ base_values = mt.BaseValuesElectrical(
 # %%
 # Configure the system model
 grid_filter = mt.LFilter(L_f=6e-3, L_g=10e-3, R_g=0)
-grid_model = mt.DynGrid(w_N=2*np.pi*50, S_grid=500e3)
+grid_model = mt.DynGrid(w_N=2*np.pi*50, S_grid=500e3, H_g=1)
 conv = mt.Inverter(u_dc=650)
 
 mdl = mt.ACGridLFilterModel(grid_filter, grid_model, conv)

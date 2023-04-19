@@ -1,12 +1,11 @@
 """
-Example simulation script: 6.9kVA grid-forming controlled converter connected
-to an AC grid with electromechanical dynamics through an L filter.
+Example simulation script: 12.5-kVA grid-forming controlled converter connected
+to an AC grid with electromechanical dynamics through an LCL filter.
     
 The control system includes:
     - Reference-feedforward d-axis current reference injection.
     - Power synchronization loop;
     - Inner current controller used to damp the current oscillations.
-    - DC-bus controller (optional)
 """
 
 
@@ -32,13 +31,6 @@ grid_filter = mt.LCLFilter(L_fc=6e-3, C_f=10e-6, L_fg=10e-3, L_g=20e-3, R_g=0)
 grid_model = mt.DynGrid(w_N=2*np.pi*50, S_grid=500e3, H_g=1)
 dc_model = None
 conv = mt.Inverter(u_dc=650)
-"""
-REMARK:
-    if you do not want to simulate any DC grid, you should define
-    dc_model = None. This would make the DC voltage constant, using the
-    value given in the converter model.
-    Do not forget also to activate/desactivate the dc-bus control
-"""
     
 mdl = mt.ACGridLCLFilterModel(grid_filter, grid_model, conv)
 
