@@ -1,11 +1,10 @@
 """
-Example simulation script: 6.9kVA grid-forming controlled converter connected
+Example simulation script: 12.5-kVA grid-forming controlled converter connected
 to a perfect AC voltage source (grid) with an LCL filter.
     
 The control system includes:
     - Power synchronization loop;
     - Inner current controller used to damp the current oscillations.
-    - DC-bus controller (optional)
 """
 
 

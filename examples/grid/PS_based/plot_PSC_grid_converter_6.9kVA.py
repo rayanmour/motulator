@@ -1,5 +1,5 @@
 """
-Example simulation script: 6.9kVA grid-forming controlled converter connected
+Example simulation script: 6.9-kVA grid-forming controlled converter connected
 to a perfect AC voltage source (grid) with an L filter.
     
 The control system includes:
