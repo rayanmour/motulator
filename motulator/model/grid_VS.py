@@ -200,18 +200,18 @@ class DynGrid:
         Returns
         -------
         w_g0 : float
-            Grid angular speed (in mechanical rad/s).
+            Grid angular speed (in rad/s).
         """
         w_g0 = self.w_g0
         return w_g0
 
     def meas_angle(self):
         """
-        Measure the rotor angle.
+        Measure the grid angle.
         This returns the grid angle at the end of the sampling period.
         Returns
         -------
         theta_g0 : float
-            grid electrical angle (in mechanical rad).
+            grid electrical angle (in rad).
         """
         return self.theta_g0
