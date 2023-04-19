@@ -26,9 +26,9 @@ class GridFollowingCtrlPars:
     # pylint: disable=too-many-instance-attributes
     # General control parameters
     p_g_ref: Callable[[float], float] = field(
-        repr=False, default=lambda t: (t > .2)*(5e3)) # active power reference
+        repr=False, default=lambda t: 0) # active power reference
     q_g_ref: Callable[[float], float] = field(
-        repr=False, default=lambda t: (t > .8)*(5e3)) # reactive power reference
+        repr=False, default=lambda t: 0) # reactive power reference
     u_dc_ref: Callable[[float], float] = field(
         repr=False, default=lambda t: 650) # DC voltage reference, only used if
                                     # the dc voltage control mode is activated.

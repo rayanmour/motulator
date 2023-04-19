@@ -13,7 +13,7 @@ import numpy as np
 from motulator.helpers import Bunch, complex2abc
 
 # %%
-class DCGridLFilterModel:
+class ACGridLFilterModel:
     """
     Continuous-time model for a grid model with an RL impedance model.
 
@@ -35,10 +35,9 @@ class DCGridLFilterModel:
     """
     
     def __init__(
-            self, grid_filter=None, grid_model=None, dc_model=None, conv=None):
+            self, grid_filter=None, grid_model=None, conv=None):
         self.grid_filter = grid_filter
         self.grid_model = grid_model
-        self.dc_model = dc_model
         self.conv = conv
 
         # Initial time
@@ -48,8 +47,12 @@ class DCGridLFilterModel:
         self.data = Bunch()
         self.data.t, self.data.q = [], []
         self.data.i_gs = []
-        self.data.u_dc = [] 
-        self.data.i_L = []
+        self.data.err_w_g = []
+        self.data.p_gov = []
+        self.data.x_turb = []
+        self.data.w_g = []
+        self.data.theta_g = []
+        self.data.u_gs = []
         
     def get_initial_values(self):
         """
@@ -57,11 +60,17 @@ class DCGridLFilterModel:
 
         Returns
         -------
-        x0 : complex list, length 2
+        x0 : complex list, length 5
             Initial values of the state variables.
 
         """
-        x0 = [self.grid_filter.i_gs0, self.dc_model.u_dc0]
+        x0 = [
+            self.grid_filter.i_gs0,
+            self.grid_model.err_w_g0,
+            self.grid_model.p_gov0,
+            self.grid_model.x_turb0,
+            self.grid_model.theta_g0]
+        
         return x0
 
     def set_initial_values(self, t0, x0):
@@ -76,12 +85,17 @@ class DCGridLFilterModel:
         """
         self.t0 = t0
         self.grid_filter.i_gs0 = x0[0]
-        self.dc_model.u_dc0 = x0[1].real
-        self.conv.u_dc0 = x0[1].real
+        # all the other state variables are real values
+        self.grid_model.err_w_g0 = x0[1].real
+        self.grid_model.p_gov0 = x0[2].real
+        self.grid_model.x_turb0 = x0[3].real
+        self.grid_model.w_g0 = self.grid_model.w_N + x0[1].real
+        theta_g0 = np.mod(x0[4].real, 2*np.pi)
+        self.grid_model.theta_g0 = theta_g0
         # calculation of converter-side voltage
-        u_cs0 = self.conv.ac_voltage(self.conv.q, x0[1].real)
+        u_cs0 = self.conv.ac_voltage(self.conv.q, self.conv.u_dc0)
         # calculation of grid-side voltage
-        e_gs0 = self.grid_model.voltages(t0)
+        e_gs0 = self.grid_model.voltages(t0, theta_g0)
         # update pcc voltage
         self.grid_filter.u_gs0 = self.grid_filter.pcc_voltages(
                                                 x0[0], u_cs0, e_gs0)
@@ -104,17 +118,16 @@ class DCGridLFilterModel:
 
         """
         # Unpack the states
-        i_gs, u_dc = x
+        i_gs, err_w_g, p_gov, x_turb, theta_g = x
         # Interconnections: outputs for computing the state derivatives
-        u_cs = self.conv.ac_voltage(self.conv.q, u_dc)
-        e_gs = self.grid_model.voltages(t)
-        q = self.conv.q
-        i_g_abc = complex2abc(i_gs)
+        u_cs = self.conv.ac_voltage(self.conv.q, self.conv.u_dc0)
+        e_gs = self.grid_model.voltages(t, theta_g)
         # State derivatives
         rl_f = self.grid_filter.f(i_gs, u_cs, e_gs)
-        dc_f = self.dc_model.f(t, u_dc, i_g_abc, q)
+        grid_f = self.grid_model.f(t, err_w_g, p_gov, x_turb)
         # List of state derivatives
-        return [rl_f, dc_f]
+        all_f = [rl_f, grid_f[0],grid_f[1],grid_f[2],grid_f[3]]
+        return all_f
 
     def save(self, sol):
         """
@@ -128,12 +141,12 @@ class DCGridLFilterModel:
         """
         self.data.t.extend(sol.t)
         self.data.i_gs.extend(sol.y[0])
-        self.data.u_dc.extend(sol.y[1].real)
+        self.data.err_w_g.extend(sol.y[1].real)
+        self.data.w_g.extend(self.grid_model.w_N + sol.y[1].real)
+        self.data.p_gov.extend(sol.y[2].real)
+        self.data.x_turb.extend(sol.y[3].real)
+        self.data.theta_g.extend(sol.y[4].real)
         self.data.q.extend(sol.q)
-        q_abc=complex2abc(np.asarray(sol.q))
-        i_c_abc=complex2abc(sol.y[0])
-        self.data.i_L.extend(
-            q_abc[0]*i_c_abc[0] + q_abc[1]*i_c_abc[1] + q_abc[2]*i_c_abc[2])
                                     
     def post_process(self):
         """
@@ -143,13 +156,17 @@ class DCGridLFilterModel:
         # From lists to the ndarray
         self.data.t = np.asarray(self.data.t)
         self.data.i_gs = np.asarray(self.data.i_gs)
-        self.data.u_dc = np.asarray(self.data.u_dc)
+        self.data.err_w_g = np.asarray(self.data.err_w_g)
+        self.data.w_g = np.asarray(self.data.w_g)
+        self.data.p_gov = np.asarray(self.data.p_gov)
+        self.data.i_gs = np.asarray(self.data.i_gs)
+        self.data.x_turb = np.asarray(self.data.x_turb)
+        self.data.theta_g = np.asarray(self.data.theta_g)
+        self.data.theta = np.mod(self.data.theta_g, 2*np.pi)
         self.data.q = np.asarray(self.data.q)
         #self.data.theta = np.asarray(self.data.theta)
         # Some useful variables
-        self.data.i_L = np.asarray(self.data.i_L)
-        self.data.e_gs = self.grid_model.voltages(self.data.t)
-        self.data.theta = np.mod(self.data.t*self.grid_model.w_N, 2*np.pi)
+        self.data.e_gs = self.grid_model.voltages(self.data.t, self.data.theta)
         self.data.u_cs = self.conv.ac_voltage(self.data.q, self.conv.u_dc0)
         self.data.u_gs = self.grid_filter.pcc_voltages(
             self.data.i_gs,
@@ -158,7 +175,7 @@ class DCGridLFilterModel:
 
 
 # %%
-class DCGridLCLFilterModel:
+class ACGridLCLFilterModel:
     """
     Continuous-time model for a grid model with an LCL impedance model.
 
@@ -204,7 +221,7 @@ class DCGridLCLFilterModel:
 
         Returns
         -------
-        x0 : complex list, length 4
+        x0 : complex list, length 1
             Initial values of the state variables.
 
         """

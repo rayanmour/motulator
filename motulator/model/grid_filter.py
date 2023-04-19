@@ -287,6 +287,19 @@ class LCLFilter:
         i_g_abc = complex2abc(self.i_gs0)  # + noise + offset ...
         return i_g_abc
 
+    def meas_cap_voltage(self):
+        """
+        Measure the capacitor voltages at the end of the sampling period.
+
+        Returns
+        -------
+        u_f_abc : 3-tuple of floats
+            Phase voltage through the capacitance of the LCL filter.
+
+        """  
+        # Capacitor voltage space vector in stationary coordinates
+        u_f_abc = complex2abc(self.u_fs0)  # + noise + offset ...
+        return u_f_abc
     
     def meas_pcc_voltage(self):
         """

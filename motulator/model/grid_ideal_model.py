@@ -184,7 +184,7 @@ class IdealGridLCLFilterModel:
 
         Returns
         -------
-        x0 : complex list, length 1
+        x0 : complex list, length 3
             Initial values of the state variables.
 
         """

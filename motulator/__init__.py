@@ -45,6 +45,7 @@ from motulator.model.grid_filter import (
 )
 from motulator.model.grid_VS import (
     Grid,
+    DynGrid,
 )
 from motulator.model.dc_grid import (
     DcGrid,
@@ -57,7 +58,9 @@ from motulator.model.grid_dc_dyn_model import (
     DCGridLFilterModel,
     DCGridLCLFilterModel,
 )
-
+from motulator.model.grid_ac_dyn_model import (
+    ACGridLFilterModel,
+)
 """
 --------------------------------------------------------------------------
 ------------------        CONTROL SYSTEMS        -------------------------
