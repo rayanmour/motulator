@@ -42,6 +42,7 @@ pars = mt.GridFollowingCtrlPars(
             f_sw = 8e3,
             T_s = 1/(16e3),
             I_max = 1.5*(3/2)*base_values.i,
+            on_u_cap = 1,
             )
 ctrl = mt.GridFollowingCtrl(pars)
 
@@ -58,7 +59,7 @@ e_g_abs_var =  lambda t: np.sqrt(2/3)*400
 mdl.grid_model.e_g_abs = e_g_abs_var # grid voltage magnitude
 
 # Create the simulation object and simulate it
-sim = mt.Simulation(mdl, ctrl, pwm=True)
+sim = mt.Simulation(mdl, ctrl, pwm=False)
 sim.simulate(t_stop = .1)
 
 # Print the execution time

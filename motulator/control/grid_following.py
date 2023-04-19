@@ -52,6 +52,9 @@ class GridFollowingCtrlPars:
     w_0_ff: float = 2*np.pi*(4*50) # low pass filter bandwidth
     K_ff: float = 1 # low pass filter gain
     
+    # Use the filter capacitance voltage measurement or PCC voltage
+    on_u_cap: bool = 0 # 1 if capacitor voltage is used, 0 if PCC is used
+    
     # DC-voltage controller
     on_v_dc: bool = 0 # put 1 to activate dc voltage controller. 0 is p-mode
     zeta_dc: float = 1 # damping ratio
@@ -115,6 +118,8 @@ class GridFollowingCtrl(Ctrl):
         # Low pass filter for voltage feedforward term
         self.w_0_ff = pars.w_0_ff
         self.K_ff = pars.K_ff
+        # Measure the voltage at the PCC or the capacitor of LCL (if used)?
+        self.on_u_cap = pars.on_u_cap
         # States
         self.u_c_i = 0j
         self.theta_p = 0
@@ -142,8 +147,11 @@ class GridFollowingCtrl(Ctrl):
         # Measure the feedback signals
         i_c_abc = mdl.grid_filter.meas_currents()
         u_dc = mdl.conv.meas_dc_voltage()
-        u_g_abc = mdl.grid_filter.meas_pcc_voltage()
-        
+        if self.on_u_cap == True:
+            u_g_abc = mdl.grid_filter.meas_cap_voltage()
+        else:
+            u_g_abc = mdl.grid_filter.meas_pcc_voltage()
+            
         # Define the active and reactive power references at the given time
         u_dc_ref = self.u_dc_ref(self.t)
         if self.on_v_dc:
