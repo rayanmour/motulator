@@ -140,7 +140,7 @@ class LCLFilter:
 
     An LCL-type grid model is built using an LCL model where the two output
     voltages are imposed and the grid-side current, the converter-side
-    current and the capacitance voltagecan be calculated using dynamic
+    current and the capacitance voltage can be calculated using dynamic
     equations.
 
     Parameters
