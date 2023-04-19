@@ -143,7 +143,8 @@ class DynGrid:
         p_m = (self.T_N/self.T_D)*p_gov + (1-(self.T_N/self.T_D))*x_turb        
         # swing equation
         derr_w_g = self.w_N*(
-            (p_m/self.S_grid - self.p_e(t) - self.D_g*err_w_g) / (2*self.H_g))
+            (p_m/self.S_grid - self.p_e(t)/self.S_grid -
+             self.D_g*err_w_g)/(2*self.H_g))
         # governor dynamics  
         dp_gov = (self.p_m_ref(t) - (1/self.r_d)*err_w_g - p_gov) / self.T_gov
         # turbine dynamics (lead-lag)

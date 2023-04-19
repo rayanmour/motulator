@@ -50,8 +50,9 @@ ctrl.p_g_ref = lambda t: ((t > .2)*(6.25e3))
 e_g_abs_var =  lambda t: np.sqrt(2/3)*400
 mdl.grid_model.e_g_abs = e_g_abs_var # grid voltage magnitude
 
-mdl.grid_model.p_e = lambda t: (t > .5)*(.5) # in per units
-mdl.grid_model.p_m_ref = lambda t: 0
+# AC grid electromechanical model
+mdl.grid_model.p_e = lambda t: (t > .5)*50e3 # load disturbance in the AC grid
+mdl.grid_model.p_m_ref = lambda t: 0 # mechanical power reference
 
 # Create the simulation object and simulate it
 sim = mt.simulation.Simulation(mdl, ctrl, pwm=False)
@@ -62,4 +63,4 @@ print('\nExecution time: {:.2f} s'.format((time.time() - start_time)))
 
 # Plot results in SI or per unit values
 #mt.plot_grid(sim)
-mt.plot_grid(sim, base=base_values,plot_pcc_voltage=True, plot_w=True)
+mt.plot_grid(sim, plot_pcc_voltage=True, plot_w=True)
