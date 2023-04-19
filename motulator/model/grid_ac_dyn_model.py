@@ -1,7 +1,7 @@
 # pylint: disable=C0103
 """
 This module contains continuous-time models for grid connected converters when
-the DC bus is modelled using a current-source model.
+the AC grid is modelled using an electromechanical model.
 
 Peak-valued complex space vectors are used. The space vector models are
 implemented in stationary coordinates.
@@ -26,9 +26,7 @@ class ACGridLFilterModel:
     grid_filter : LFilter
         RL line dynamic model.
     grid_model : Grid
-        Constant voltage source model.
-    dc_model : DcGrid
-        DC grid voltage dynamics (capacitance model)
+        Voltage source model with electromechanical modes of AC grid.
     conv : Inverter | PWMInverter
         Inverter model.
 
@@ -188,19 +186,16 @@ class ACGridLCLFilterModel:
     grid_filter : LCLFilter
         LCL dynamic model.
     grid_model : Grid
-        Constant voltage source model.
-    dc_model : DcGrid
-        DC grid voltage dynamics (capacitance model)
+        Voltage source model with electromechanical modes of AC grid.
     conv : Inverter | PWMInverter
         Inverter model.
 
     """
     
     def __init__(
-            self, grid_filter=None, grid_model=None, dc_model=None, conv=None):
+            self, grid_filter=None, grid_model=None, conv=None):
         self.grid_filter = grid_filter
         self.grid_model = grid_model
-        self.dc_model = dc_model
         self.conv = conv
 
         # Initial time
@@ -212,8 +207,12 @@ class ACGridLCLFilterModel:
         self.data.i_gs = []
         self.data.i_cs = []
         self.data.u_fs = []
-        self.data.u_dc = [] 
-        self.data.i_L = []
+        self.data.err_w_g = []
+        self.data.p_gov = []
+        self.data.x_turb = []
+        self.data.w_g = []
+        self.data.theta_g = []
+        self.data.u_gs = []
         
     def get_initial_values(self):
         """
@@ -221,7 +220,7 @@ class ACGridLCLFilterModel:
 
         Returns
         -------
-        x0 : complex list, length 1
+        x0 : complex list, length 7
             Initial values of the state variables.
 
         """
@@ -229,7 +228,10 @@ class ACGridLCLFilterModel:
             self.grid_filter.i_cs0,
             self.grid_filter.u_fs0,
             self.grid_filter.i_gs0,
-            self.dc_model.u_dc0]
+            self.grid_model.err_w_g0,
+            self.grid_model.p_gov0,
+            self.grid_model.x_turb0,
+            self.grid_model.theta_g0]
 
         return x0
 
@@ -247,10 +249,15 @@ class ACGridLCLFilterModel:
         self.grid_filter.i_cs0 = x0[0]
         self.grid_filter.u_fs0 = x0[1]
         self.grid_filter.i_gs0 = x0[2]
-        self.dc_model.u_dc0 = x0[3].real
-        self.conv.u_dc0 = x0[3].real
+        # AC grid electromechanical state variables
+        self.grid_model.err_w_g0 = x0[3].real
+        self.grid_model.p_gov0 = x0[4].real
+        self.grid_model.x_turb0 = x0[5].real
+        self.grid_model.w_g0 = self.grid_model.w_N + x0[3].real
+        theta_g0 = np.mod(x0[6].real, 2*np.pi)
+        self.grid_model.theta_g0 = theta_g0
         # calculation of grid-side voltage
-        e_gs0 = self.grid_model.voltages(t0)
+        e_gs0 = self.grid_model.voltages(t0, theta_g0)
         # update pcc voltage
         self.grid_filter.u_gs0 = self.grid_filter.pcc_voltages(
                                                     x0[2], x0[1], e_gs0)
@@ -273,17 +280,16 @@ class ACGridLCLFilterModel:
 
         """
         # Unpack the states
-        i_cs, u_fs, i_gs, u_dc = x
+        i_cs, u_fs, i_gs, err_w_g, p_gov, x_turb, theta_g = x
         # Interconnections: outputs for computing the state derivatives
         u_cs = self.conv.ac_voltage(self.conv.q, self.conv.u_dc0)
-        e_gs = self.grid_model.voltages(t)
-        q = self.conv.q
-        i_c_abc = complex2abc(i_cs)
+        e_gs = self.grid_model.voltages(t, theta_g)
         # State derivatives
         lcl_f = self.grid_filter.f(i_cs, u_fs, i_gs, u_cs, e_gs)
-        dc_f = self.dc_model.f(t, u_dc, i_c_abc, q)
+        grid_f = self.grid_model.f(t, err_w_g, p_gov, x_turb)
         # List of state derivatives
-        all_f = [lcl_f[0], lcl_f[1], lcl_f[2], dc_f]
+        all_f = [
+            lcl_f[0],lcl_f[1],lcl_f[2],grid_f[0],grid_f[1],grid_f[2],grid_f[3]]
         return all_f
 
     def save(self, sol):
@@ -300,12 +306,12 @@ class ACGridLCLFilterModel:
         self.data.i_cs.extend(sol.y[0])
         self.data.u_fs.extend(sol.y[1])
         self.data.i_gs.extend(sol.y[2])
-        self.data.u_dc.extend(sol.y[3].real)
+        self.data.err_w_g.extend(sol.y[3].real)
+        self.data.w_g.extend(self.grid_model.w_N + sol.y[3].real)
+        self.data.p_gov.extend(sol.y[4].real)
+        self.data.x_turb.extend(sol.y[5].real)
+        self.data.theta_g.extend(sol.y[6].real)
         self.data.q.extend(sol.q)
-        q_abc=complex2abc(np.asarray(sol.q))
-        i_c_abc=complex2abc(sol.y[0])
-        self.data.i_L.extend(
-            q_abc[0]*i_c_abc[0] + q_abc[1]*i_c_abc[1] + q_abc[2]*i_c_abc[2])
                                 
     def post_process(self):
         """
@@ -317,14 +323,19 @@ class ACGridLCLFilterModel:
         self.data.i_cs = np.asarray(self.data.i_cs)
         self.data.u_fs = np.asarray(self.data.u_fs)
         self.data.i_gs = np.asarray(self.data.i_gs)
-        self.data.u_dc = np.asarray(self.data.u_dc)
+        self.data.err_w_g = np.asarray(self.data.err_w_g)
+        self.data.w_g = np.asarray(self.data.w_g)
+        self.data.p_gov = np.asarray(self.data.p_gov)
+        self.data.i_gs = np.asarray(self.data.i_gs)
+        self.data.x_turb = np.asarray(self.data.x_turb)
+        self.data.theta_g = np.asarray(self.data.theta_g)
+        self.data.theta = np.mod(self.data.theta_g, 2*np.pi)
         self.data.q = np.asarray(self.data.q)
+        #self.data.theta = np.asarray(self.data.theta)
         # Some useful variables
-        self.data.i_L = np.asarray(self.data.i_L)
-        self.data.e_gs = self.grid_model.voltages(self.data.t)
-        self.data.theta = np.mod(self.data.t*self.grid_model.w_N, 2*np.pi)
+        self.data.e_gs = self.grid_model.voltages(self.data.t, self.data.theta)
         self.data.u_cs = self.conv.ac_voltage(self.data.q, self.conv.u_dc0)
         self.data.u_gs = self.grid_filter.pcc_voltages(
             self.data.i_gs,
-            self.data.u_fs,
+            self.data.u_cs,
             self.data.e_gs)

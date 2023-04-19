@@ -28,8 +28,8 @@ base_values = mt.BaseValuesElectrical(
 
 # %%
 # Configure the system model (grid model)
-grid_filter = mt.LFilter(L_f=6e-3, L_g=30e-3, R_g=0)
-grid_model = mt.DynGrid(w_N=2*np.pi*50, S_grid=500e3)
+grid_filter = mt.LCLFilter(L_fc=6e-3, C_f=10e-6, L_fg=10e-3, L_g=20e-3, R_g=0)
+grid_model = mt.DynGrid(w_N=2*np.pi*50, S_grid=500e3, H_g=1)
 dc_model = None
 conv = mt.Inverter(u_dc=650)
 """
@@ -40,7 +40,7 @@ REMARK:
     Do not forget also to activate/desactivate the dc-bus control
 """
     
-mdl = mt.ACGridLFilterModel(grid_filter, grid_model, conv)
+mdl = mt.ACGridLCLFilterModel(grid_filter, grid_model, conv)
 
 pars = mt.PSCtrlPars(
         L_f=6e-3,

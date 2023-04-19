@@ -60,6 +60,7 @@ from motulator.model.grid_dc_dyn_model import (
 )
 from motulator.model.grid_ac_dyn_model import (
     ACGridLFilterModel,
+    ACGridLCLFilterModel,
 )
 """
 --------------------------------------------------------------------------
