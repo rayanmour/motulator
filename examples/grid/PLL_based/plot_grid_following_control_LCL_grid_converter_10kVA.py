@@ -41,7 +41,7 @@ pars = mt.GridFollowingCtrlPars(
             R_f=0,
             f_sw = 8e3,
             T_s = 1/(16e3),
-            I_max = 1.5*(3/2)*base_values.i,
+            I_max = 1.5*base_values.i,
             on_u_cap = 1,
             )
 ctrl = mt.GridFollowingCtrl(pars)
