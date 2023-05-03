@@ -11,7 +11,7 @@ from motulator.helpers import (
     )
 
 # %%
-class Grid:
+class StiffSource:
     """
     Grid subsystem.
 
@@ -75,7 +75,7 @@ class Grid:
         return e_g_abc
 
 # %%
-class DynGrid:
+class FlexSource:
     """
     Grid subsystem.
     This models the 3-phase voltage source of the AC grid while taking into

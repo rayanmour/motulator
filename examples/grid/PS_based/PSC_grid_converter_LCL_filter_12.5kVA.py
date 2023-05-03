@@ -27,7 +27,7 @@ base_values = mt.BaseValuesElectrical(
 # Configure the system model (grid model)
 grid_filter = mt.LCLFilter(
     L_fc = 3e-3, C_f = 10e-6, L_fg = 3e-3, L_g=20e-3, R_g=0)
-grid_model = mt.Grid(w_N=2*np.pi*50)
+grid_model = mt.StiffSource(w_N=2*np.pi*50)
 dc_model = None
 conv = mt.Inverter(u_dc=650)
 

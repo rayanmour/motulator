@@ -307,7 +307,7 @@ class PLL:
         u_g_q = np.imag(u_g) 
                 
         # Absolute value of the grid-voltage vector
-        abs_u_g = abs(u_g)
+        abs_u_g = np.abs(u_g)
         
         # Calculation of the estimated PLL frequency
         w_g_pll = self.k_p_pll*u_g_q + self.w_pll

@@ -43,9 +43,9 @@ from motulator.model.grid_filter import (
     LFilter,
     LCLFilter,
 )
-from motulator.model.grid_VS import (
-    Grid,
-    DynGrid,
+from motulator.model.grid_volt_source import (
+    StiffSource,
+    FlexSource,
 )
 from motulator.model.dc_grid import (
     DcGrid,
