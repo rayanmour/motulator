@@ -13,7 +13,7 @@ import numpy as np
 from motulator.helpers import Bunch, complex2abc
 
 # %%
-class ACGridLFilterModel:
+class AcFlexSourceLFilterModel:
     """
     Continuous-time model for a grid model with an RL impedance model.
 
@@ -173,7 +173,7 @@ class ACGridLFilterModel:
 
 
 # %%
-class ACGridLCLFilterModel:
+class AcFlexSourceLCLFilterModel:
     """
     Continuous-time model for a grid model with an LCL impedance model.
 

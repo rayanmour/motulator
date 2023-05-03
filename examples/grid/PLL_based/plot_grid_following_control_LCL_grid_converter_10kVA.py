@@ -30,11 +30,7 @@ grid_model = mt.StiffSource(w_N=2*np.pi*50)
 dc_model = None
 conv = mt.Inverter(u_dc=650)
 
-if dc_model == None:
-    mdl = mt.IdealGridLCLFilterModel(grid_filter, grid_model, conv)
-else:
-    mdl = mt.DCGridLCLFilterModel(
-        grid_filter, grid_model, dc_model, conv)
+mdl = mt.StiffSourceLCLFilterModel(grid_filter, grid_model, conv)
 
 pars = mt.GridFollowingCtrlPars(
             L_f=10e-3,

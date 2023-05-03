@@ -29,7 +29,7 @@ grid_filter = mt.LFilter(L_f=6e-3, L_g=10e-3, R_g=0)
 grid_model = mt.FlexSource(w_N=2*np.pi*50, S_grid=500e3, H_g=1)
 conv = mt.Inverter(u_dc=650)
 
-mdl = mt.ACGridLFilterModel(grid_filter, grid_model, conv)
+mdl = mt.AcFlexSourceLFilterModel(grid_filter, grid_model, conv)
     
 pars = mt.GridFollowingCtrlPars(
             L_f=10e-3,

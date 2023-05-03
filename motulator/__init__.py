@@ -50,17 +50,17 @@ from motulator.model.grid_volt_source import (
 from motulator.model.dc_bus import (
     DcCurrSource,
 )
-from motulator.model.grid_ideal_model import (
-    IdealGridLFilterModel,
-    IdealGridLCLFilterModel,
+from motulator.model.grid_stiff_model import (
+    StiffSourceLFilterModel,
+    StiffSourceLCLFilterModel,
 )
 from motulator.model.grid_dc_dyn_model import (
-    DCGridLFilterModel,
-    DCGridLCLFilterModel,
+    DcCurrSourceLFilterModel,
+    DcCurrSourceLCLFilterModel,
 )
 from motulator.model.grid_ac_dyn_model import (
-    ACGridLFilterModel,
-    ACGridLCLFilterModel,
+    AcFlexSourceLFilterModel,
+    AcFlexSourceLCLFilterModel,
 )
 """
 --------------------------------------------------------------------------

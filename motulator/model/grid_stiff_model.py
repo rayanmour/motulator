@@ -13,7 +13,7 @@ import numpy as np
 from motulator.helpers import Bunch
 
 # %%
-class IdealGridLFilterModel:
+class StiffSourceLFilterModel:
     """
     Continuous-time model for a grid model with an RL impedance model.
 
@@ -142,7 +142,7 @@ class IdealGridLFilterModel:
 
 
 # %%
-class IdealGridLCLFilterModel:
+class StiffSourceLCLFilterModel:
     """
     Continuous-time model for a grid model with an LCL impedance model.
 

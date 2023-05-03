@@ -32,7 +32,7 @@ grid_model = mt.FlexSource(w_N=2*np.pi*50, S_grid=500e3, H_g=1)
 dc_model = None
 conv = mt.Inverter(u_dc=650)
     
-mdl = mt.ACGridLCLFilterModel(grid_filter, grid_model, conv)
+mdl = mt.AcFlexSourceLCLFilterModel(grid_filter, grid_model, conv)
 
 pars = mt.PSCtrlPars(
         L_f=6e-3,

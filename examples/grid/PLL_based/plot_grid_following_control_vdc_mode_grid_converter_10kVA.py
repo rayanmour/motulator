@@ -33,16 +33,16 @@ dc_model = mt.DcCurrSource(C_dc = 1e-3, u_dc0=600, G_dc=0)
 conv = mt.Inverter(u_dc=600)
 """
 REMARK:
-    if you do not want to simulate any DC grid, you should define
+    if you do not want to simulate any DC bus dynamics, you should define
     dc_model = None. This would make the DC voltage constant, using the
     value given in the converter model.
-    Do not forget also to activate/deactivate the dc-bus control
+    Do not forget also to activate/deactivate the dc-bus control.
 """
     
 if dc_model == None:
-    mdl = mt.IdealGridLFilterModel(grid_filter, grid_model, conv)
+    mdl = mt.StiffSourceLFilterModel(grid_filter, grid_model, conv)
 else:
-    mdl = mt.DCGridLFilterModel(
+    mdl = mt.DcCurrSourceLFilterModel(
         grid_filter, grid_model, dc_model, conv)
 
 pars = mt.GridFollowingCtrlPars(

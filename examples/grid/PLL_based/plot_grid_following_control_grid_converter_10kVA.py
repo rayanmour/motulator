@@ -38,9 +38,9 @@ REMARK:
 """
     
 if dc_model == None:
-    mdl = mt.IdealGridLFilterModel(grid_filter, grid_model, conv)
+    mdl = mt.StiffSourceLFilterModel(grid_filter, grid_model, conv)
 else:
-    mdl = mt.DCGridLFilterModel(
+    mdl = mt.DcCurrSourceLFilterModel(
         grid_filter, grid_model, dc_model, conv)
 
 pars = mt.GridFollowingCtrlPars(
