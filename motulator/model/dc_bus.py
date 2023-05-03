@@ -9,9 +9,9 @@ source and the capacitance dynamics need to be modeled.
 from motulator.helpers import complex2abc
 
 # %%
-class DcGrid:
+class DcCurrSource:
     """
-    DC grid
+    DC bus current source model
 
     This model is used to compute the DC grid dynamics, represented by a first
     order system with the DC-bus capacitance dynamics.

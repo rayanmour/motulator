@@ -47,8 +47,8 @@ from motulator.model.grid_volt_source import (
     StiffSource,
     FlexSource,
 )
-from motulator.model.dc_grid import (
-    DcGrid,
+from motulator.model.dc_bus import (
+    DcCurrSource,
 )
 from motulator.model.grid_ideal_model import (
     IdealGridLFilterModel,
