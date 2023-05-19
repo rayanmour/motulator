@@ -25,29 +25,18 @@ base_values = mt.BaseValuesElectrical(
 
 # %%
 # Configure the system model
-grid_filter = mt.LFilter(L_f=10e-3, L_g=10e-3, R_g=0)
+grid_filter = mt.LFilter(L_f=10e-3, L_g=0, R_g=0)
 grid_model = mt.StiffSource(w_N=2*np.pi*50)
 dc_model = None
 conv = mt.Inverter(u_dc=650)
-"""
-REMARK:
-    if you do not want to simulate any DC bus, you should define
-    dc_model = None. This would make the DC voltage constant, using the
-    value given in the converter model.
-    Do not forget also to activate/deactivate the dc-bus control
-"""
-    
-if dc_model == None:
-    mdl = mt.StiffSourceLFilterModel(grid_filter, grid_model, conv)
-else:
-    mdl = mt.DcCurrSourceLFilterModel(
-        grid_filter, grid_model, dc_model, conv)
+
+mdl = mt.StiffSourceLFilterModel(grid_filter, grid_model, conv)
 
 pars = mt.GridFollowingCtrlPars(
             L_f=10e-3,
             R_f=0,
-            f_sw = 4e3,
-            T_s = 1/(8e3),
+            f_sw = 5e3,
+            T_s = 1/(10e3),
             I_max = 1.5*base_values.i,
             )
 ctrl = mt.GridFollowingCtrl(pars)

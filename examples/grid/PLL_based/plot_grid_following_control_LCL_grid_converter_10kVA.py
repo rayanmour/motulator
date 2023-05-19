@@ -25,7 +25,7 @@ base_values = mt.BaseValuesElectrical(
 
 # %%
 # Configure the system model
-grid_filter = mt.LCLFilter(L_fc=10e-3, C_f=10e-6, L_fg = 6e-3, L_g=4e-3, R_g=0)
+grid_filter = mt.LCLFilter(L_fc=3.7e-3, C_f=8e-6, L_fg = 3.7e-3, L_g=0, R_g=0)
 grid_model = mt.StiffSource(w_N=2*np.pi*50)
 dc_model = None
 conv = mt.Inverter(u_dc=650)
@@ -33,7 +33,7 @@ conv = mt.Inverter(u_dc=650)
 mdl = mt.StiffSourceLCLFilterModel(grid_filter, grid_model, conv)
 
 pars = mt.GridFollowingCtrlPars(
-            L_f=10e-3,
+            L_f=3.7e-3,
             R_f=0,
             f_sw = 8e3,
             T_s = 1/(16e3),

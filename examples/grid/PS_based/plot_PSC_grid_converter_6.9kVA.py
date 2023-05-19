@@ -26,7 +26,7 @@ base_values = mt.BaseValuesElectrical(
 
 # %%
 # Configure the system model (grid model)
-grid_filter = mt.LFilter(L_f = 6e-3, L_g=67.8e-3, R_g=0)
+grid_filter = mt.LFilter(L_f = 8e-3, L_g=65.8e-3, R_g=0)
 grid_model = mt.StiffSource(w_N=2*np.pi*50)
 dc_model = None
 conv = mt.Inverter(u_dc=650)
@@ -38,7 +38,7 @@ else:
         grid_filter, grid_model, dc_model, conv)
 
 pars = mt.PSCtrlPars(
-        L_f=6e-3,
+        L_f=8e-3,
         R_f=0,
         f_sw = 4e3,
         T_s = 1/(8e3),

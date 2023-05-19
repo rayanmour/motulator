@@ -27,18 +27,18 @@ base_values = mt.BaseValuesElectrical(
 
 # %%
 # Configure the system model (grid model)
-grid_filter = mt.LCLFilter(L_fc=6e-3, C_f=10e-6, L_fg=10e-3, L_g=20e-3, R_g=0)
-grid_model = mt.FlexSource(w_N=2*np.pi*50, S_grid=500e3, H_g=1)
+grid_filter = mt.LCLFilter(L_fc=3e-3, C_f=10e-6, L_fg=3e-3, L_g=20e-3, R_g=0)
+grid_model = mt.FlexSource(w_N=2*np.pi*50, S_grid=500e3, H_g=2, r_d = 0.05)
 dc_model = None
 conv = mt.Inverter(u_dc=650)
     
 mdl = mt.AcFlexSourceLCLFilterModel(grid_filter, grid_model, conv)
 
 pars = mt.PSCtrlPars(
-        L_f=6e-3,
+        L_f=3e-3,
         R_f=0,
-        f_sw = 4e3,
-        T_s = 1/(8e3),
+        f_sw = 5e3,
+        T_s = 1/(10e3),
         on_rf=True,
         on_v_dc=False,
         I_max = 1.5*base_values.i,
@@ -56,12 +56,12 @@ e_g_abs_var =  lambda t: np.sqrt(2/3)*400
 mdl.grid_model.e_g_abs = e_g_abs_var # grid voltage magnitude
 
 # AC grid electromechanical model
-mdl.grid_model.p_e = lambda t: (t > .5)*50e3 # load disturbance in the AC grid
+mdl.grid_model.p_e = lambda t: (t > .4)*50e3 # load disturbance in the AC grid
 mdl.grid_model.p_m_ref = lambda t: 0 # mechanical power reference
 
 # Create the simulation object and simulate it
 sim = mt.simulation.Simulation(mdl, ctrl, pwm=False)
-sim.simulate(t_stop = 10)
+sim.simulate(t_stop = 6)
 
 # Print the execution time
 print('\nExecution time: {:.2f} s'.format((time.time() - start_time)))

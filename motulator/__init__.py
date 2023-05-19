@@ -48,19 +48,19 @@ from motulator.model.grid_volt_source import (
     FlexSource,
 )
 from motulator.model.dc_bus import (
-    DcCurrSource,
+    DCBus,
 )
-from motulator.model.grid_stiff_model import (
-    StiffSourceLFilterModel,
-    StiffSourceLCLFilterModel,
+from motulator.model.grid_cst_freq_model import (
+    StiffSourceAndLFilterModel,
+    StiffSourceAndLCLFilterModel,
 )
 from motulator.model.grid_dc_dyn_model import (
-    DcCurrSourceLFilterModel,
-    DcCurrSourceLCLFilterModel,
+    DCBusAndLFilterModel,
+    DCBusAndLCLFilterModel,
 )
 from motulator.model.grid_ac_dyn_model import (
-    AcFlexSourceLFilterModel,
-    AcFlexSourceLCLFilterModel,
+    ACFlexSourceAndLFilterModel,
+    ACFlexSourceAndLCLFilterModel,
 )
 """
 --------------------------------------------------------------------------

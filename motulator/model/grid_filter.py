@@ -11,11 +11,12 @@ from motulator.helpers import complex2abc
 # %%
 class LFilter:
     """
-    Inductive filter model with a connection made to the inverter outputs.
+    Inductive filter model with a connection made to the inverter outputs. 
 
     An inductive filter model is built using a simple inductance model where
     the two output voltages are imposed and the current can be calculated using
-    dynamic equations.
+    dynamic equations. This model includes a model for an inductive-resistive
+    impedance of the grid combined with the L-filter model.
 
     Parameters
     ----------
@@ -51,9 +52,9 @@ class LFilter:
         i_gs : complex
             Line current (A).
         u_cs : complex
-            Converter-side voltage (V).
+            Converter voltage (V).
         e_gs : complex
-            Grid-side voltage (V).
+            Grid voltage (V).
 
         Returns
         -------
@@ -61,15 +62,10 @@ class LFilter:
             Voltage at the point of common coupling (PCC).
 
         """
-        # calculation of voltage-related term
-        v_tu = ((self.L_g/(self.L_g+self.L_f))*u_cs + 
-            (self.L_f/(self.L_g+self.L_f))*e_gs)
-        # calculation of current-related term
-        v_ti = (
-            ((self.R_g*self.L_f - self.R_f*self.L_g)/(self.L_g+self.L_f))*i_gs)
-        
+
         # PCC voltage in alpha-beta coordinates
-        u_gs = v_tu + v_ti
+        u_gs = (self.L_g*u_cs + self.L_f*e_gs + 
+            (self.R_g*self.L_f - self.R_f*self.L_g)*i_gs)/(self.L_g+self.L_f)
         
         return u_gs
     
@@ -141,7 +137,8 @@ class LCLFilter:
     An LCL-type grid model is built using an LCL model where the two output
     voltages are imposed and the grid-side current, the converter-side
     current and the capacitance voltage can be calculated using dynamic
-    equations.
+    equations. This model includes a model for an inductive-resistive
+    impedance of the grid combined with the LCL-filter model.
 
     Parameters
     ----------
@@ -224,15 +221,15 @@ class LCLFilter:
         Parameters
         ----------
         i_cs : complex
-            Converter-side line current (A).
+            Converter line current (A).
         u_fs : complex
             Capacitance voltage (V).
         i_gs : complex
-            Grid-side line current (A).
+            Grid line current (A).
         u_cs : complex
-            Converter-side voltage (V).
+            Converter voltage (V).
         e_gs : complex
-            Grid-side voltage (V).
+            Grid voltage (V).
 
         Returns
         -------

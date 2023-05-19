@@ -13,7 +13,7 @@ import numpy as np
 from motulator.helpers import Bunch, complex2abc
 
 # %%
-class DcCurrSourceLFilterModel:
+class DCBusAndLFilterModel:
     """
     Continuous-time model for a grid model with an RL impedance model.
 
@@ -158,7 +158,7 @@ class DcCurrSourceLFilterModel:
 
 
 # %%
-class DcCurrSourceLCLFilterModel:
+class DCBusAndLCLFilterModel:
     """
     Continuous-time model for a grid model with an LCL impedance model.
 

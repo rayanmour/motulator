@@ -49,8 +49,7 @@ class GridFollowingCtrlPars:
     zeta: float = 1 # damping ratio
     
     # Low pass filter for voltage feedforward term
-    w_0_ff: float = 2*np.pi*(4*50) # low pass filter bandwidth
-    K_ff: float = 1 # low pass filter gain
+    alpha_ff: float = 2*np.pi*(4*50) # low pass filter bandwidth
     
     # Use the filter capacitance voltage measurement or PCC voltage
     on_u_cap: bool = 0 # 1 if capacitor voltage is used, 0 if PCC is used
@@ -116,8 +115,7 @@ class GridFollowingCtrl(Ctrl):
         self.k_p_pll = 2*pars.zeta*pars.w_0_pll/pars.u_gN
         self.k_i_pll = pars.w_0_pll*pars.w_0_pll/pars.u_gN
         # Low pass filter for voltage feedforward term
-        self.w_0_ff = pars.w_0_ff
-        self.K_ff = pars.K_ff
+        self.alpha_ff = pars.alpha_ff
         # Measure the voltage at the PCC or the capacitor of LCL (if used)?
         self.on_u_cap = pars.on_u_cap
         # States
@@ -227,8 +225,8 @@ class GridFollowingCtrl(Ctrl):
         if self.on_v_dc == 1:
             self.dc_voltage_control.update(e_dc, p_dc_ref, p_dc_ref_lim)
         # Update the low pass filer integrator for feedforward action
-        self.u_g_filt = (1 - self.T_s*self.w_0_ff)*u_g_filt + (
-            self.K_ff*self.T_s*self.w_0_ff*u_g)
+        self.u_g_filt = (1 - self.T_s*self.alpha_ff)*u_g_filt + (
+            self.T_s*self.alpha_ff*u_g)
 
         return self.T_s, d_abc_ref
     
