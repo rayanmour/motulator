@@ -272,6 +272,9 @@ def plot_grid(
     plot_pcc_voltage : Boolean, optional
         'True' if the user wants to plot the 3-phase waveform at the PCC. This
         is an optional feature and the grid voltage is plotted by default.
+    plot_w : Boolean, optional
+        'True' if the user wants to plot the grid frequency instead of the
+        phase angles (by default).
 
     """
     FS = 16 # Font size of the plots axis

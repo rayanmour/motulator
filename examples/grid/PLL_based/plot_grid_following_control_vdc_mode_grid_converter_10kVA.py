@@ -65,7 +65,7 @@ ctrl.q_g_ref = lambda t: (t > .04)*(4e3)
 
 # DC-side current (seen as a disturbance from the converter perspective)
 if dc_model != None:
-    mdl.dc_model.i_dc = lambda t: (t > .06)*(10)
+    mdl.dc_model.i_ext = lambda t: (t > .06)*(10)
 
 # AC-voltage magnitude (to simulate voltage dips or short-circuits)
 e_g_abs_var =  lambda t: np.sqrt(2/3)*400

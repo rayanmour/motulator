@@ -49,7 +49,7 @@ class DCBusAndLFilterModel:
         self.data.t, self.data.q = [], []
         self.data.i_gs = []
         self.data.u_dc = [] 
-        self.data.i_L = []
+        self.data.i_dc = []
         
     def get_initial_values(self):
         """
@@ -132,7 +132,7 @@ class DCBusAndLFilterModel:
         self.data.q.extend(sol.q)
         q_abc=complex2abc(np.asarray(sol.q))
         i_c_abc=complex2abc(sol.y[0])
-        self.data.i_L.extend(
+        self.data.i_dc.extend(
             q_abc[0]*i_c_abc[0] + q_abc[1]*i_c_abc[1] + q_abc[2]*i_c_abc[2])
                                     
     def post_process(self):
@@ -147,7 +147,7 @@ class DCBusAndLFilterModel:
         self.data.q = np.asarray(self.data.q)
         #self.data.theta = np.asarray(self.data.theta)
         # Some useful variables
-        self.data.i_L = np.asarray(self.data.i_L)
+        self.data.i_dc = np.asarray(self.data.i_dc)
         self.data.e_gs = self.grid_model.voltages(self.data.t)
         self.data.theta = np.mod(self.data.t*self.grid_model.w_N, 2*np.pi)
         self.data.u_cs = self.conv.ac_voltage(self.data.q, self.conv.u_dc0)
@@ -196,7 +196,7 @@ class DCBusAndLCLFilterModel:
         self.data.i_cs = []
         self.data.u_fs = []
         self.data.u_dc = [] 
-        self.data.i_L = []
+        self.data.i_dc = []
         
     def get_initial_values(self):
         """
@@ -287,7 +287,7 @@ class DCBusAndLCLFilterModel:
         self.data.q.extend(sol.q)
         q_abc=complex2abc(np.asarray(sol.q))
         i_c_abc=complex2abc(sol.y[0])
-        self.data.i_L.extend(
+        self.data.i_dc.extend(
             q_abc[0]*i_c_abc[0] + q_abc[1]*i_c_abc[1] + q_abc[2]*i_c_abc[2])
                                 
     def post_process(self):
@@ -303,7 +303,7 @@ class DCBusAndLCLFilterModel:
         self.data.u_dc = np.asarray(self.data.u_dc)
         self.data.q = np.asarray(self.data.q)
         # Some useful variables
-        self.data.i_L = np.asarray(self.data.i_L)
+        self.data.i_dc = np.asarray(self.data.i_dc)
         self.data.e_gs = self.grid_model.voltages(self.data.t)
         self.data.theta = np.mod(self.data.t*self.grid_model.w_N, 2*np.pi)
         self.data.u_cs = self.conv.ac_voltage(self.data.q, self.conv.u_dc0)
