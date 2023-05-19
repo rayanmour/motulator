@@ -50,15 +50,15 @@ from motulator.model.grid_volt_source import (
 from motulator.model.dc_bus import (
     DCBus,
 )
-from motulator.model.grid_cst_freq_model import (
+from motulator.model.const_freq_model import (
     StiffSourceAndLFilterModel,
     StiffSourceAndLCLFilterModel,
 )
-from motulator.model.grid_dc_dyn_model import (
+from motulator.model.dc_dyn_model import (
     DCBusAndLFilterModel,
     DCBusAndLCLFilterModel,
 )
-from motulator.model.grid_ac_dyn_model import (
+from motulator.model.ac_dyn_model import (
     ACFlexSourceAndLFilterModel,
     ACFlexSourceAndLCLFilterModel,
 )

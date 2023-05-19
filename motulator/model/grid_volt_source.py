@@ -1,6 +1,7 @@
 # pylint: disable=C0103
 """
-This module contains continuous-time models for grid.
+This module contains continuous-time models for 3-phase voltage source
+of a grid.
 
 """
 import numpy as np
@@ -15,7 +16,7 @@ class StiffSource:
     """
     Grid subsystem.
 
-    This models the 3-phase voltage source of the AC grid.
+    This model is a constant frequency 3-phase voltage source of the AC grid.
 
     Parameters
     ----------
