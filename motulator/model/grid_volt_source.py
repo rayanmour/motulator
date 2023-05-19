@@ -20,12 +20,10 @@ class StiffSource:
 
     Parameters
     ----------
-    U_gN : float
-        nominal voltage peak value (phase to ground)
-    w_g : float
+    w_N : float
         grid constant frequency
     e_g_abs : function
-        3-phase grid voltage magnitude
+        3-phase grid voltage magnitude (phase-to-ground peak value)
     """
     
     def __init__(self, w_N=2*np.pi*50,
@@ -35,7 +33,7 @@ class StiffSource:
 
     def voltages(self, t):
         """
-        Compute the voltage in stationary frame at the grid output:
+        Compute the grid voltage in stationary frame:
            
         Parameters
         ----------
@@ -64,6 +62,11 @@ class StiffSource:
     def meas_voltages(self, t):
         """
         Measure the phase voltages at the end of the sampling period.
+        
+        Parameters
+        ----------
+        t : float
+            Time.
 
         Returns
         -------
@@ -89,10 +92,26 @@ class FlexSource:
     Configurations, Technical Report, 26.11.2013.
     Parameters
     ----------
-    U_gN : float
-        Voltage peak value (phase to ground)
+    T_D : float
+        turbine delay time constant (in seconds).
+    T_N : float
+        turbine derivative time constant (in seconds).
+    H_g : float
+        grid inertia constant (in seconds).
+    r_d : float
+        primary frequency droop control gain (in p.u.).
+    T_gov : float
+        governor time constant (in seconds).
     w_N : float
-        grid constant frequency
+        grid constant frequency (in rad/s).
+    S_grid : float
+        grid rated power (in VA).
+    e_g_abs : function
+        3-phase grid voltage magnitude (phase-to-ground peak value).
+    p_m_ref : function
+        mechanical power output reference (in W).
+    p_e : function
+        electrical power disturbance (in W).
     """
 
     def __init__(
@@ -102,13 +121,11 @@ class FlexSource:
             D_g=0,
             r_d=.05,
             T_gov=0.5,
-            U_gN=400*np.sqrt(2/3),
             w_N=2*np.pi*50,
             S_grid =500e6,
             e_g_abs=lambda t: 400*np.sqrt(2/3),
             p_m_ref=lambda t: 0,
             p_e=lambda t: 0):
-        self.U_gN=U_gN
         self.e_g_abs=e_g_abs
         self.w_N=w_N
         self.S_grid=S_grid
@@ -133,8 +150,12 @@ class FlexSource:
             Time.
         err_w_g : float
             grid angular speed deviation (in mechanical rad/s).
+        p_gov : float
+            governor output power (in W).
+        x_turb : float
+            turbine state variable (in W).
         p_e : float
-            Electric power.
+            electrical power disturbance (in W).
         Returns
         -------
         list, length 2
@@ -155,17 +176,19 @@ class FlexSource:
     
     def voltages(self, t, theta_g):
         """
-        Compute the voltage in stationary frame at the grid output:
+        Compute the grid voltage in stationary frame:
            
         Parameters
         ----------
         t : float
             Time.
+        theta_g : float
+            grid electrical angle (in rad).
 
         Returns
         -------
         e_gs: complex
-            grid complex voltage.
+            grid complex voltage (in V).
 
         """ 
         

@@ -1,7 +1,9 @@
 # pylint: disable=C0103
 """
 This module contains continuous-time models for grid connected converters when
-the DC bus is modelled using a voltage-source model.
+the DC bus is modeled using a voltage-source model. The grid is modeled as a
+constant frequency voltage source. L/LCL filter and grid impedance are included
+in the model as interfaces between the grid and the converter.
 
 Peak-valued complex space vectors are used. The space vector models are
 implemented in stationary coordinates.
@@ -156,8 +158,6 @@ class StiffSourceAndLCLFilterModel:
         LCL dynamic model.
     grid_model : Grid
         Constant voltage source model.
-    dc_model : DcGrid
-        DC grid voltage dynamics (capacitance model)
     conv : Inverter | PWMInverter
         Inverter model.
 

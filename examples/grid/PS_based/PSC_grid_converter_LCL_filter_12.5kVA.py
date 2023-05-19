@@ -31,7 +31,7 @@ grid_model = mt.StiffSource(w_N=2*np.pi*50)
 dc_model = None
 conv = mt.Inverter(u_dc=650)
 
-mdl = mt.StiffSourceLCLFilterModel(grid_filter, grid_model, conv)
+mdl = mt.StiffSourceAndLCLFilterModel(grid_filter, grid_model, conv)
 
 pars = mt.PSCtrlPars(
         L_f=3e-3,

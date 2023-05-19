@@ -29,7 +29,7 @@ base_values = mt.BaseValuesElectrical(
 # Configure the system model (grid model)
 grid_filter = mt.LFilter(L_f = 10e-3, L_g=0, R_g=0)
 grid_model = mt.StiffSource(w_N=2*np.pi*50)
-dc_model = mt.DcCurrSource(C_dc = 1e-3, u_dc0=600, G_dc=0)
+dc_model = mt.DCBus(C_dc = 1e-3, u_dc0=600, G_dc=0)
 conv = mt.Inverter(u_dc=600)
 """
 REMARK:
@@ -40,9 +40,9 @@ REMARK:
 """
     
 if dc_model == None:
-    mdl = mt.StiffSourceLFilterModel(grid_filter, grid_model, conv)
+    mdl = mt.StiffSourceAndLFilterModel(grid_filter, grid_model, conv)
 else:
-    mdl = mt.DcCurrSourceLFilterModel(
+    mdl = mt.DCBusAndLFilterModel(
         grid_filter, grid_model, dc_model, conv)
 
 pars = mt.GridFollowingCtrlPars(
