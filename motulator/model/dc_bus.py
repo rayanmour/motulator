@@ -9,35 +9,35 @@ source and the capacitance dynamics need to be modeled.
 from motulator.helpers import complex2abc
 
 # %%
-class DcGrid:
+class DCBus:
     """
-    DC grid
+    DC bus model
 
-    This model is used to compute the DC grid dynamics, represented by a first
+    This model is used to compute the DC bus dynamics, represented by a first
     order system with the DC-bus capacitance dynamics.
 
      Parameters
      ----------
      C_dc : float
-         DC grid capacitance (in Farad)
+         DC bus capacitance (in Farad)
      G_dc : float
-         DC grid conductance (in Siemens)
-    i_dc : function
-        External dc current, seen as disturbance, `i_dc(t)`.
+         DC bus conductance (in Siemens)
+    i_ext : function
+        External dc current, seen as disturbance, `i_ext(t)`.
 
      """
     
-    def __init__(self, C_dc=1e-3, G_dc=0, i_dc=lambda t: 0, u_dc0 = 650):
+    def __init__(self, C_dc=1e-3, G_dc=0, i_ext=lambda t: 0, u_dc0 = 650):
         self.C_dc = C_dc
         self.G_dc = G_dc
-        self.i_dc = i_dc
+        self.i_ext = i_ext
         # Initial values
         self.u_dc0 = u_dc0
     
     @staticmethod
     def dc_current(i_c_abc, q):
         """
-        Compute the DC-side converter current, used to model the DC-bus voltage
+        Compute the converter DC current, used to model the DC-bus voltage
         dynamics.
     
         Parameters
@@ -51,17 +51,17 @@ class DcGrid:
     
         Returns
         -------
-        i_L: float
-            dc-side converter voltage
+        i_dc: float
+            dc current (in A)
     
         """
         # Duty ratio back into three-phase ratios
         q_abc = complex2abc(q)
         
         # Dot product
-        i_L = q_abc[0]*i_c_abc[0] + q_abc[1]*i_c_abc[1] + q_abc[2]*i_c_abc[2]
+        i_dc = q_abc[0]*i_c_abc[0] + q_abc[1]*i_c_abc[1] + q_abc[2]*i_c_abc[2]
         
-        return i_L
+        return i_dc
     
     def f(self, t, u_dc, i_c_abc, q):
         # pylint: disable=R0913
@@ -88,10 +88,10 @@ class DcGrid:
         """
         
         # Calculation of the dc-current
-        i_L = self.dc_current(i_c_abc, q)
+        i_dc = self.dc_current(i_c_abc, q)
           
         # State derivatives
-        du_dc = (self.i_dc(t) - i_L - self.G_dc*u_dc)/self.C_dc
+        du_dc = (self.i_ext(t) - i_dc - self.G_dc*u_dc)/self.C_dc
                 
         return du_dc
 

@@ -136,9 +136,9 @@ class PSCtrl(Ctrl):
 
         """
         # Measure the feedback signals
-        i_c_abc = mdl.rl_model.meas_currents()
+        i_c_abc = mdl.grid_filter.meas_currents()
         u_dc = mdl.conv.meas_dc_voltage()
-        u_g_abc = mdl.rl_model.meas_pcc_voltage()
+        u_g_abc = mdl.grid_filter.meas_pcc_voltage()
         
         # Calculation of PCC voltage in synchronous frame
         u_g = np.exp(-1j*self.theta_psc)*abc2complex(u_g_abc)

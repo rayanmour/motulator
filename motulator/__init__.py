@@ -39,20 +39,29 @@ from motulator.model.sm_drive import SynchronousMotorDrive
 """
 
 # import grid converter models
-from motulator.model.grid_RL import (
-    InverterToInductiveGrid,
+from motulator.model.grid_filter import (
+    LFilter,
+    LCLFilter,
 )
-from motulator.model.grid_VS import (
-    Grid,
+from motulator.model.grid_volt_source import (
+    StiffSource,
+    FlexSource,
 )
-from motulator.model.dc_grid import (
-    DcGrid,
+from motulator.model.dc_bus import (
+    DCBus,
 )
-from motulator.model.grid_connection import (
-    GridCompleteModel,
-    ACDCGridCompleteModel,
+from motulator.model.const_freq_model import (
+    StiffSourceAndLFilterModel,
+    StiffSourceAndLCLFilterModel,
 )
-
+from motulator.model.dc_dyn_model import (
+    DCBusAndLFilterModel,
+    DCBusAndLCLFilterModel,
+)
+from motulator.model.ac_dyn_model import (
+    ACFlexSourceAndLFilterModel,
+    ACFlexSourceAndLCLFilterModel,
+)
 """
 --------------------------------------------------------------------------
 ------------------        CONTROL SYSTEMS        -------------------------

@@ -253,7 +253,8 @@ def plot_extra(sim, t_span=(1.1, 1.125), base=None):
 """
 
 # %%
-def plot_grid(sim, t_range=None, base=None, plot_pcc_voltage=False):
+def plot_grid(
+        sim, t_range=None, base=None, plot_pcc_voltage=False, plot_w=False):
     """
     Plot example figures of grid converter simulations.
 
@@ -271,6 +272,9 @@ def plot_grid(sim, t_range=None, base=None, plot_pcc_voltage=False):
     plot_pcc_voltage : Boolean, optional
         'True' if the user wants to plot the 3-phase waveform at the PCC. This
         is an optional feature and the grid voltage is plotted by default.
+    plot_w : Boolean, optional
+        'True' if the user wants to plot the grid frequency instead of the
+        phase angles (by default).
 
     """
     FS = 16 # Font size of the plots axis
@@ -294,7 +298,7 @@ def plot_grid(sim, t_range=None, base=None, plot_pcc_voltage=False):
         pu_vals = True
         
     # 3-phase quantities
-    i_c_abc = complex2abc(mdl.i_gs).T
+    i_g_abc = complex2abc(mdl.i_gs).T
     u_g_abc = complex2abc(mdl.u_gs).T
     e_g_abc = complex2abc(mdl.e_gs).T
     
@@ -339,18 +343,26 @@ def plot_grid(sim, t_range=None, base=None, plot_pcc_voltage=False):
         #ax1.set_ylabel('DC-bus voltage (V)')
     
     # Subplot 2: Converter currents
-    ax2.plot(mdl.t, i_c_abc/base.i, linewidth=LW)
-    ax2.legend([r'$i_c^a$',r'$i_c^b$',r'$i_c^c$']
+    ax2.plot(mdl.t, i_g_abc/base.i, linewidth=LW)
+    ax2.legend([r'$i_g^a$',r'$i_g^b$',r'$i_g^c$']
                ,prop={'size': FL}, loc= 'upper right')
     ax2.set_xlim(t_range)
     ax2.set_xticklabels([])
     
-    # Subplot 3: Phase angles
-    ax3.plot(mdl.t, mdl.theta, linewidth=LW)
-    ax3.plot(ctrl.t, ctrl.theta_c, '--', linewidth=LW)
-    ax3.legend([r'$\theta_{g}$',r'$\theta_{c}$']
-               ,prop={'size': FL}, loc= 'upper right')
-    ax3.set_xlim(t_range)
+    if plot_w:
+        # Subplot 3: Grid and converter frequencies
+        ax3.plot(mdl.t, mdl.w_g/base.w, linewidth=LW)
+        ax3.plot(ctrl.t, ctrl.w_c/base.w, '--', linewidth=LW)
+        ax3.legend([r'$\omega_{g}$',r'$\omega_{c}$']
+                   ,prop={'size': FL}, loc= 'upper right')
+        ax3.set_xlim(t_range)
+    else:
+        # Subplot 3: Phase angles
+        ax3.plot(mdl.t, mdl.theta, linewidth=LW)
+        ax3.plot(ctrl.t, ctrl.theta_c, '--', linewidth=LW)
+        ax3.legend([r'$\theta_{g}$',r'$\theta_{c}$']
+                   ,prop={'size': FL}, loc= 'upper right')
+        ax3.set_xlim(t_range)
 
     # Add axis labels
     if pu_vals:
@@ -359,7 +371,12 @@ def plot_grid(sim, t_range=None, base=None, plot_pcc_voltage=False):
     else:
         ax1.set_ylabel('Voltage (V)')
         ax2.set_ylabel('Current (A)')
-    ax3.set_ylabel('Angle (rad)')
+    if plot_w==False: 
+        ax3.set_ylabel('Angle (rad)')
+    elif plot_w and pu_vals:
+        ax3.set_ylabel('Frequency (p.u.)')
+    elif pu_vals == False:
+        ax3.set_ylabel('Frequency (rad/s)')
     ax3.set_xlabel('Time (s)')
 
     # Change font size

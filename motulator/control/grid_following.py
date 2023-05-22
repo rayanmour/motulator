@@ -26,9 +26,9 @@ class GridFollowingCtrlPars:
     # pylint: disable=too-many-instance-attributes
     # General control parameters
     p_g_ref: Callable[[float], float] = field(
-        repr=False, default=lambda t: (t > .2)*(5e3)) # active power reference
+        repr=False, default=lambda t: 0) # active power reference
     q_g_ref: Callable[[float], float] = field(
-        repr=False, default=lambda t: (t > .8)*(5e3)) # reactive power reference
+        repr=False, default=lambda t: 0) # reactive power reference
     u_dc_ref: Callable[[float], float] = field(
         repr=False, default=lambda t: 650) # DC voltage reference, only used if
                                     # the dc voltage control mode is activated.
@@ -49,8 +49,10 @@ class GridFollowingCtrlPars:
     zeta: float = 1 # damping ratio
     
     # Low pass filter for voltage feedforward term
-    w_0_ff: float = 2*np.pi*(4*50) # low pass filter bandwidth
-    K_ff: float = 1 # low pass filter gain
+    alpha_ff: float = 2*np.pi*(4*50) # low pass filter bandwidth
+    
+    # Use the filter capacitance voltage measurement or PCC voltage
+    on_u_cap: bool = 0 # 1 if capacitor voltage is used, 0 if PCC is used
     
     # DC-voltage controller
     on_v_dc: bool = 0 # put 1 to activate dc voltage controller. 0 is p-mode
@@ -113,8 +115,9 @@ class GridFollowingCtrl(Ctrl):
         self.k_p_pll = 2*pars.zeta*pars.w_0_pll/pars.u_gN
         self.k_i_pll = pars.w_0_pll*pars.w_0_pll/pars.u_gN
         # Low pass filter for voltage feedforward term
-        self.w_0_ff = pars.w_0_ff
-        self.K_ff = pars.K_ff
+        self.alpha_ff = pars.alpha_ff
+        # Measure the voltage at the PCC or the capacitor of LCL (if used)?
+        self.on_u_cap = pars.on_u_cap
         # States
         self.u_c_i = 0j
         self.theta_p = 0
@@ -140,10 +143,13 @@ class GridFollowingCtrl(Ctrl):
 
         """
         # Measure the feedback signals
-        i_c_abc = mdl.rl_model.meas_currents()
+        i_c_abc = mdl.grid_filter.meas_currents()
         u_dc = mdl.conv.meas_dc_voltage()
-        u_g_abc = mdl.rl_model.meas_pcc_voltage()
-        
+        if self.on_u_cap == True:
+            u_g_abc = mdl.grid_filter.meas_cap_voltage()
+        else:
+            u_g_abc = mdl.grid_filter.meas_pcc_voltage()
+            
         # Define the active and reactive power references at the given time
         u_dc_ref = self.u_dc_ref(self.t)
         if self.on_v_dc:
@@ -219,8 +225,8 @@ class GridFollowingCtrl(Ctrl):
         if self.on_v_dc == 1:
             self.dc_voltage_control.update(e_dc, p_dc_ref, p_dc_ref_lim)
         # Update the low pass filer integrator for feedforward action
-        self.u_g_filt = (1 - self.T_s*self.w_0_ff)*u_g_filt + (
-            self.K_ff*self.T_s*self.w_0_ff*u_g)
+        self.u_g_filt = (1 - self.T_s*self.alpha_ff)*u_g_filt + (
+            self.T_s*self.alpha_ff*u_g)
 
         return self.T_s, d_abc_ref
     
@@ -299,7 +305,7 @@ class PLL:
         u_g_q = np.imag(u_g) 
                 
         # Absolute value of the grid-voltage vector
-        abs_u_g = abs(u_g)
+        abs_u_g = np.abs(u_g)
         
         # Calculation of the estimated PLL frequency
         w_g_pll = self.k_p_pll*u_g_q + self.w_pll
