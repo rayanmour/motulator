@@ -150,7 +150,7 @@ class DCBusAndLFilterModel:
         self.data.i_dc = np.asarray(self.data.i_dc)
         self.data.e_gs = self.grid_model.voltages(self.data.t)
         self.data.theta = np.mod(self.data.t*self.grid_model.w_N, 2*np.pi)
-        self.data.u_cs = self.conv.ac_voltage(self.data.q, self.conv.u_dc0)
+        self.data.u_cs = self.conv.ac_voltage(self.data.q, self.data.u_dc)
         self.data.u_gs = self.grid_filter.pcc_voltages(
             self.data.i_gs,
             self.data.u_cs,
@@ -306,7 +306,7 @@ class DCBusAndLCLFilterModel:
         self.data.i_dc = np.asarray(self.data.i_dc)
         self.data.e_gs = self.grid_model.voltages(self.data.t)
         self.data.theta = np.mod(self.data.t*self.grid_model.w_N, 2*np.pi)
-        self.data.u_cs = self.conv.ac_voltage(self.data.q, self.conv.u_dc0)
+        self.data.u_cs = self.conv.ac_voltage(self.data.q, self.data.u_dc)
         self.data.u_gs = self.grid_filter.pcc_voltages(
             self.data.i_gs,
             self.data.u_fs,
